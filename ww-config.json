@@ -1,0 +1,13 @@
+{
+    "componentPath": "./src/wwObject.vue",
+    "content": {
+        "type": "wwObject",
+        "data": {}
+    },
+    "upsales": {
+        "wwAnalytics": {
+            "click": false
+        }
+    },
+    "cmsOptions": {}
+}
