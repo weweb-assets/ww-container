@@ -1,7 +1,7 @@
 {
     "componentPath": "./src/wwObject.vue",
     "content": {
-        "type": "wwObject",
+        "type": "ww_container",
         "data": {}
     },
     "upsales": {
@@ -9,5 +9,20 @@
             "click": false
         }
     },
-    "cmsOptions": {}
+    "cmsOptions": {
+        "wwObjectMenu": {
+            "items": [
+                {
+                    "name": "OPTIONS",
+                    "main": true,
+                    "text": {
+                        "en": "Options",
+                        "fr": "Options"
+                    },
+                    "icon": "wwi wwi-edit-other",
+                    "action": "edit"
+                }
+            ]
+        }
+    }
 }
