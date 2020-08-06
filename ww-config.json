@@ -21,6 +21,15 @@
                     },
                     "icon": "wwi wwi-edit-other",
                     "action": "edit"
+                },
+                {
+                    "name": "CONNECT",
+                    "text": {
+                        "en": "Connect to CMS collection",
+                        "fr": "Connecter à une collections CMS"
+                    },
+                    "icon": "",
+                    "action": "connectCmsCollection"
                 }
             ]
         }

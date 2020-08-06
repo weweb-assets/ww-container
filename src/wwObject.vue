@@ -17,6 +17,7 @@
 /* wwManager:start */
 import { mapGetters } from 'vuex';
 /* wwManager:end */
+const wwu = window.wwLib.wwUtils;
 
 export default {
     name: '__COMPONENT_NAME__',
@@ -38,9 +39,13 @@ export default {
             return this.wwObjectCtrl.get();
         },
         c_style() {
-            const style = {};
-
-            return style;
+            return {};
+        },
+        isConnectedToCms() {
+            return !!this.wwObject.content.cms;
+        },
+        canAddContent() {
+            return !this.isConnectedToCms;
         },
         /* wwManager:start */
         ...mapGetters({ c_screen: 'front/getScreenSize' }),
@@ -55,6 +60,7 @@ export default {
                     return this.wwObject.content.data.options[this.d_screens[screenIndex]];
                 }
             }
+            return {};
         }
         /* wwManager:end */
     },
@@ -62,11 +68,6 @@ export default {
         initData() {
             //Init objects
             let needUpdate = false;
-            // if (!this.wwObject.content.data.background) {
-            //     this.wwObject.content.data.background = wwLib.wwObject.getDefault({ type: "ww-color", data: { color: "white" } });
-            //     needUpdate = true;
-            // }
-
             if (!this.wwObject.content.data.options) {
                 this.wwObject.content.data.options = {
                     lg: {
@@ -82,7 +83,7 @@ export default {
                 needUpdate = true;
             }
 
-            if (_.isEmpty(this.wwObject.content.data.wwObjects)) {
+            if (!Array.isArray(this.wwObject.content.data.wwObjects)) {
                 this.wwObject.content.data.wwObjects = [];
                 needUpdate = true;
             }
@@ -98,12 +99,12 @@ export default {
             let editList = {
                 SELECT_LAYOUT: {
                     separator: {
-                        en: `Container's layout`,
-                        fr: `Disposition du container`
+                        en: "Container's layout",
+                        fr: 'Disposition du container'
                     },
                     title: {
-                        en: `Container's layout`,
-                        fr: `Disposition du container`
+                        en: "Container's layout",
+                        fr: 'Disposition du container'
                     },
                     desc: {
                         en: 'Set layout to column or row.',
@@ -129,8 +130,8 @@ export default {
 
             wwLib.wwPopups.addStory('WWCONTAINER_LAYOUT', {
                 title: {
-                    en: `Container's layout`,
-                    fr: `Disposition du container`
+                    en: "Container's layout",
+                    fr: 'Disposition du container'
                 },
                 type: 'wwPopupForm',
                 buttons: {
@@ -146,8 +147,8 @@ export default {
                     fields: [
                         {
                             label: {
-                                en: `Container's layout`,
-                                fr: `Disposition du container`
+                                en: "Container's layout",
+                                fr: 'Disposition du container'
                             },
                             desc: {
                                 en: 'Set layout to column or row.',
@@ -179,8 +180,8 @@ export default {
                         },
                         {
                             label: {
-                                en: `Reverse elements' order`,
-                                fr: `Inverser l'ordre des élements`
+                                en: "Reverse elements' order",
+                                fr: "Inverser l'ordre des élements"
                             },
                             desc: {
                                 en: 'Show element in reverse order.',
@@ -192,8 +193,8 @@ export default {
                         },
                         {
                             label: {
-                                en: `Elements' position on primary axis`,
-                                fr: `Position des élements sur l'axe principal`
+                                en: "Elements' position on primary axis",
+                                fr: "Position des élements sur l'axe principal"
                             },
                             desc: {
                                 en: '',
@@ -253,8 +254,8 @@ export default {
                         },
                         {
                             label: {
-                                en: `Elements' position on secondary axis`,
-                                fr: `Position des élements sur l'axe secondaire`
+                                en: "Elements' position on secondary axis",
+                                fr: "Position des élements sur l'axe secondaire"
                             },
                             desc: {
                                 en: '',
@@ -300,8 +301,8 @@ export default {
                         },
                         {
                             label: {
-                                en: `Wrap elements if needed (For rows only)`,
-                                fr: `Mettre les élements à la ligne si necessaire (Pour l'affichage en lignes seulement)`
+                                en: 'Wrap elements if needed (For rows only)',
+                                fr: "Mettre les élements à la ligne si necessaire (Pour l'affichage en lignes seulement)"
                             },
                             desc: {
                                 en: '',
@@ -313,12 +314,12 @@ export default {
                         },
                         {
                             label: {
-                                en: `Min height`,
-                                fr: `Hauteur minumale`
+                                en: 'Min height',
+                                fr: 'Hauteur minumale'
                             },
                             desc: {
-                                en: `Use 'px' or '%' as unit.`,
-                                fr: `Utiliser 'px' ou '%' comme unité.`
+                                en: "Use 'px' or '%' as unit.",
+                                fr: "Utiliser 'px' ou '%' comme unité."
                             },
                             type: 'text',
                             key: 'minHeight',
@@ -392,12 +393,10 @@ export default {
             wwLib.wwObjectHover.removeLock();
         },
         add(options) {
-            if (_.isEmpty(this.wwObject.content.data.wwObjects)) {
+            if (!Array.isArray(this.wwObject.content.data.wwObjects)) {
                 this.wwObject.content.data.wwObjects = [];
             }
-
             this.wwObject.content.data.wwObjects.splice(options.index, 0, options.wwObject);
-
             this.wwObjectCtrl.update(this.wwObject);
         },
         remove(options) {
@@ -408,6 +407,38 @@ export default {
             this.wwObject.content.data.wwObjects.splice(options.index, 1);
 
             this.wwObjectCtrl.update(this.wwObject);
+        },
+        async connectCmsCollection() {
+            const {
+                bindings: { collection }
+            } = await this.wwObjectCtrl.connectCmsCollection(this.wwObject);
+            const templateWwObject = this.cloneTemplateWwObject(this.wwObject.content.data.wwObjects[0]);
+            this.duplicateElements(collection, templateWwObject);
+            this.wwObject.content.cms = {
+                collection: collection.name,
+                template: {
+                    ...templateWwObject
+                }
+            };
+            this.wwObjectCtrl.update(this.wwObject);
+        },
+        duplicateElements(collection, templateWwObject) {
+            this.wwObject.content.data.wwObjects = collection.data.map((item, index) => {
+                const clone = this.cloneTemplateWwObject(templateWwObject);
+                clone.content.cms = {
+                    bindings: {
+                        collection: collection.name,
+                        index
+                    }
+                };
+                return clone;
+            });
+        },
+        cloneTemplateWwObject(templateWwObject) {
+            const clone = JSON.parse(JSON.stringify(templateWwObject));
+            wwu.changeUniqueIds(clone);
+            clone.uniqueId = wwu.getUniqueId();
+            return clone;
         }
         /* wwManager:end */
     },
