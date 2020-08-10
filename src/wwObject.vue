@@ -5,8 +5,8 @@
 <!-- This is your HTML -->
 <template>
     <div class="ww-container" v-style="c_style">
-        <wwLayout :options="wwObject.content.data.options" tag="div" :ww-list="wwObject.content.data.wwObjects" class="wwobjects-wrapper" @ww-add="add($event)" @ww-remove="remove($event)">
-            <wwObject v-for="wwObject in wwObject.content.data.wwObjects" :key="wwObject.uniqueId" :ww-object="wwObject"></wwObject>
+        <wwLayout :options="wwObject.content.data.options" tag="div" :ww-list="wwObject.content.data.wwObjects" class="wwobjects-wrapper" @ww-add="add($event)" @ww-remove="remove($event)" @refresh-bindings="refreshDisplay">
+            <wwObject v-for="wwObject in wwObject.content.data.wwObjects" :key="wwObject.uniqueId" :ww-object="wwObject" @refresh-bindings="refreshDisplay"></wwObject>
         </wwLayout>
     </div>
 </template>
@@ -28,7 +28,10 @@ export default {
     data() {
         return {
             /* wwManager:start */
-            d_screens: ['lg', 'md', 'sm', 'xs']
+            d_screens: ['lg', 'md', 'sm', 'xs'],
+            cmsTemplate: {},
+            isRootCmsTemplate: false,
+            cmsTemplateEditor: {}
             /* wwManager:end */
         };
     },
@@ -40,12 +43,6 @@ export default {
         },
         c_style() {
             return {};
-        },
-        isConnectedToCms() {
-            return !!this.wwObject.content.cms;
-        },
-        canAddContent() {
-            return !this.isConnectedToCms;
         },
         /* wwManager:start */
         ...mapGetters({ c_screen: 'front/getScreenSize' }),
@@ -63,6 +60,10 @@ export default {
             return {};
         }
         /* wwManager:end */
+    },
+    created() {
+        this.initData();
+        wwLib.$on('container:refresh-display', this.refreshDisplay);
     },
     methods: {
         initData() {
@@ -392,58 +393,84 @@ export default {
 
             wwLib.wwObjectHover.removeLock();
         },
-        add(options) {
+        async add(options) {
             if (!Array.isArray(this.wwObject.content.data.wwObjects)) {
                 this.wwObject.content.data.wwObjects = [];
             }
             this.wwObject.content.data.wwObjects.splice(options.index, 0, options.wwObject);
             this.wwObjectCtrl.update(this.wwObject);
+            wwLib.$emit('container:refresh-display');
         },
         remove(options) {
             if (_.isEmpty(this.wwObject.content.data.wwObjects)) {
                 this.wwObject.content.data.wwObjects = [];
             }
-
             this.wwObject.content.data.wwObjects.splice(options.index, 1);
-
             this.wwObjectCtrl.update(this.wwObject);
+            wwLib.$emit('container:refresh-display');
         },
         async connectCmsCollection() {
             const {
                 bindings: { collection }
-            } = await this.wwObjectCtrl.connectCmsCollection(this.wwObject);
-            const templateWwObject = this.cloneTemplateWwObject(this.wwObject.content.data.wwObjects[0]);
-            this.duplicateElements(collection, templateWwObject);
+            } = await this.wwObjectCtrl.connectCmsCollection();
+            this.cmsTemplate = this.getCmsTemplateCopy(this.wwObject.content.data.wwObjects[0]);
+            this.isRootCmsTemplate = true;
             this.wwObject.content.cms = {
-                collection: collection.name,
-                template: {
-                    ...templateWwObject
-                }
+                collection: collection.name
             };
-            this.wwObjectCtrl.update(this.wwObject);
+            this.repeatTemplate(collection, this.cmsTemplate);
+            this.subscribeToBindingUpdates();
         },
-        duplicateElements(collection, templateWwObject) {
-            this.wwObject.content.data.wwObjects = collection.data.map((item, index) => {
-                const clone = this.cloneTemplateWwObject(templateWwObject);
+
+        repeatTemplate(collection, cmsTemplate) {
+            collection.data.forEach((item, index) => {
+                const clone = index > 0 ? this.getCmsTemplateCopy(cmsTemplate) : cmsTemplate;
                 clone.content.cms = {
                     bindings: {
                         collection: collection.name,
                         index
                     }
                 };
-                return clone;
+                if (index > 0) this.add({ wwObject: clone, index });
             });
         },
-        cloneTemplateWwObject(templateWwObject) {
+
+        async refreshDisplay() {
+            if (this.isRootCmsTemplate) {
+                this.cmsTemplate = this.getCmsTemplateCopy(this.wwObject.content.data.wwObjects[0]);
+                this.wwObject.content.data.wwObjects = this.wwObject.content.data.wwObjects.map((item, index) => {
+                    const clone = index > 0 ? this.getCmsTemplateCopy(this.cmsTemplate) : this.cmsTemplate;
+                    return clone;
+                });
+            }
+            await this.wwObjectCtrl.update(this.wwObject);
+        },
+
+        getCmsTemplateCopy(templateWwObject) {
             const clone = JSON.parse(JSON.stringify(templateWwObject));
             wwu.changeUniqueIds(clone);
             clone.uniqueId = wwu.getUniqueId();
             return clone;
+        },
+        subscribeToBindingUpdates() {
+            this.wwObjectCtrl.onCmsUpdate(this.onChildBindingUpdate);
+        },
+        async onChildBindingUpdate(cmsUpdate) {
+            await this.refreshDisplay();
+            if (this.isRootCmsTemplate) {
+                const {
+                    cms: { collection },
+                    data: { wwObjects }
+                } = this.wwObject.content;
+                if (collection === cmsUpdate.collection) {
+                    wwObjects.forEach((wwObject, idx) => {
+                        this.wwObjectCtrl.evaluateBindings({ wwObject, idx });
+                    });
+                }
+                this.wwObjectCtrl.update(this.wwObject);
+            }
         }
         /* wwManager:end */
-    },
-    created() {
-        this.initData();
     }
 };
 </script>
