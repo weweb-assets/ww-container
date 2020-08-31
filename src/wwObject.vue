@@ -6,7 +6,7 @@
 <template>
     <div class="ww-container" v-style="c_style">
         <wwLayout :options="wwObject.content.data.options" tag="div" :ww-list="wwObject.content.data.wwObjects" class="wwobjects-wrapper" @ww-add="add($event)" @ww-remove="remove($event)">
-            <wwObject v-for="wwObject in wwObject.content.data.wwObjects" :key="wwObject.uniqueId" :ww-object="wwObject"></wwObject>
+            <wwObject v-for="(wwObject, index) in wwObject.content.data.wwObjects" :key="index" :ww-object="wwObject" :indexInBoundedParent="isRootCmsTemplate ? index : -1"></wwObject>
         </wwLayout>
     </div>
 </template>
@@ -18,7 +18,6 @@
 import { mapGetters } from 'vuex';
 /* wwManager:end */
 import makeStories from './stories';
-const wwu = window.wwLib.wwUtils;
 
 const CONTAINER_CONTENT_CHANGED = 'ww-container:content-changed';
 export default {
@@ -30,9 +29,7 @@ export default {
     data() {
         return {
             /* wwManager:start */
-            d_screens: ['lg', 'md', 'sm', 'xs'],
-            cmsTemplate: {},
-            editedTemplateIdx: 0
+            d_screens: ['lg', 'md', 'sm', 'xs']
             /* wwManager:end */
         };
     },
@@ -60,23 +57,15 @@ export default {
             }
             return {};
         },
-        isConnected() {
-            const { cms } = this.wwObject.content;
-            return Object(cms) === cms && Object(cms.bindings) === cms.bindings;
-        },
         isRootCmsTemplate() {
             const { cms } = this.wwObject.content;
-            return this.isConnected && cms.bindings.collection && !('index' in cms.bindings);
-        },
-        templateIndex() {
-            return this.isConnected && !this.isRootCmsTemplate ? this.wwObject.content.cms.bindings.index : -1;
+            return cms && Object(cms) === cms && Object(cms.bindings) === cms.bindings && cms.bindings.collection;
         }
         /* wwManager:end */
     },
     created() {
         this.initData();
-        this.initDataBindings();
-        wwLib.$on(CONTAINER_CONTENT_CHANGED, this.handleContentChanged);
+        if (this.isRootCmsTemplate) this.initDataBindings();
     },
     methods: {
         isContainer(wwObject) {
@@ -110,11 +99,10 @@ export default {
             }
         },
         /* wwManager:start */
-        initDataBindings() {
-            if (this.isRootCmsTemplate) {
-                this.updateSavedBoundedChildren();
-                this.wwObjectCtrl.onBindingContextUpdate(this.handleBindingContextChanged);
-            }
+        async initDataBindings() {
+            const collectionDescriptor = this.wwObjectCtrl.getCmsCollection(this.wwObject.content.cms.bindings.collection);
+            this.createBoundedChildren(collectionDescriptor);
+            await this.wwObjectCtrl.update(this.wwObject);
         },
 
         async edit() {
@@ -167,7 +155,7 @@ export default {
 
                 await this.wwObjectCtrl.globalEdit(result);
 
-                await this.afterContentChanged();
+                // await this.afterContentChanged();
             } catch (error) {
                 console.log(error);
             }
@@ -176,108 +164,35 @@ export default {
         },
         async add(options) {
             this.wwObject.content.data.wwObjects.splice(options.index, 0, options.wwObject);
-            await this.afterContentChanged();
+            await this.wwObjectCtrl.update(this.wwObject);
         },
         async remove(options) {
             this.wwObject.content.data.wwObjects.splice(options.index, 1);
-            await this.afterContentChanged();
-        },
-        findNearestConnectedContainer() {
-            let parent = this;
-            while (parent) {
-                if (parent.isConnected) {
-                    break;
-                }
-                parent = parent.$parent;
-            }
-            return parent;
-        },
-        async afterContentChanged() {
             await this.wwObjectCtrl.update(this.wwObject);
-            const parentConnectedContainer = this.findNearestConnectedContainer();
-            if (!parentConnectedContainer) return;
-            const { cms } = parentConnectedContainer.wwObject.content;
-            wwLib.$emit(CONTAINER_CONTENT_CHANGED, cms.bindings.index);
-        },
-
-        async updateSavedBoundedChildren() {
-            const collectionDescriptor = this.wwObjectCtrl.getCmsCollection(this.wwObject.content.cms.bindings.collection);
-            this.updateRootCmsTemplate(collectionDescriptor);
-            const updatedWwObject = this.wwObjectCtrl.evaluateBindings(this.wwObject.uniqueId);
-            await this.wwObjectCtrl.update(updatedWwObject);
         },
 
         async connectCmsCollection() {
             const {
                 bindings: { collectionDescriptor }
             } = await this.wwObjectCtrl.connectCmsCollection();
-            this.updateRootCmsTemplate(collectionDescriptor);
-            this.wwObjectCtrl.onBindingContextUpdate(this.handleBindingContextChanged);
+            this.createBoundedChildren(collectionDescriptor);
             this.wwObjectCtrl.update(this.wwObject);
         },
-        updateRootCmsTemplate(collectionDescriptor) {
-            const cmsTemplateId = this.wwObject.content.data.wwObjects[this.editedTemplateIdx].uniqueId;
-            this.cmsTemplate = this.getCmsTemplateCopy(this.wwObjectCtrl.getWwObjectById(cmsTemplateId));
+        createBoundedChildren(collectionDescriptor) {
+            const cmsTemplateId = this.wwObject.content.data.wwObjects[0].uniqueId;
+            const cmsTemplate = this.wwObjectCtrl.getWwObjectById(cmsTemplateId);
             this.wwObject.content.cms = {
                 bindings: {
                     collection: collectionDescriptor.name
                 }
             };
-            this.wwObject.content.data.wwObjects = collectionDescriptor.data.map((item, index) => {
-                const clone = index === this.editedTemplateIdx ? this.cmsTemplate : this.getCmsTemplateCopy(this.cmsTemplate);
-                this.bindDirectChild(clone, collectionDescriptor.name, index);
-                return clone;
+            this.wwObject.content.data.wwObjects = collectionDescriptor.data.map(() => {
+                return this.getCmsTemplateCopy(cmsTemplate);
             });
-        },
-        async handleContentChanged(editedTemplateIndex) {
-            if (this.isRootCmsTemplate) {
-                this.updateUnsavedBoundedChildren(editedTemplateIndex);
-                await this.wwObjectCtrl.update(this.wwObject);
-                await this.evaluateChildBindings();
-            }
-        },
-        updateUnsavedBoundedChildren(editedTemplateIndex) {
-            const templateChild = this.wwObject.content.data.wwObjects[editedTemplateIndex];
-            if (templateChild === undefined || !this.isConnected) return;
-            this.cmsTemplate = this.getCmsTemplateCopy(templateChild);
-            this.wwObject.content.data.wwObjects = this.wwObject.content.data.wwObjects.map((item, index) => {
-                const clone = index === editedTemplateIndex ? this.cmsTemplate : this.getCmsTemplateCopy(this.cmsTemplate);
-                this.bindDirectChild(clone, this.wwObject.content.cms.bindings.collection, index);
-                return clone;
-            });
-        },
-
-        async handleBindingContextChanged(bindingUpdate) {
-            if (this.wwObject.uniqueId !== bindingUpdate.rootContainerId) return;
-            const { editedTemplateIndex } = bindingUpdate;
-            this.updateUnsavedBoundedChildren(editedTemplateIndex);
-            await this.wwObjectCtrl.update(this.wwObject);
-            await this.evaluateChildBindings();
-        },
-
-        async evaluateChildBindings() {
-            const { wwObjects } = this.wwObject.content.data;
-            const updatedContainers = wwObjects.map(wwObject => {
-                return this.wwObjectCtrl.evaluateBindings(wwObject.uniqueId);
-            });
-            this.wwObject.content.data.wwObjects = updatedContainers;
-            await this.wwObjectCtrl.update(this.wwObject);
         },
 
         getCmsTemplateCopy(templateWwObject) {
-            const clone = JSON.parse(JSON.stringify(templateWwObject));
-            wwu.changeUniqueIds(clone);
-            clone.uniqueId = wwu.getUniqueId();
-            return clone;
-        },
-        bindDirectChild(child, collection, index) {
-            child.content.cms = {
-                ...child.content.cms,
-                bindings: {
-                    collection,
-                    index
-                }
-            };
+            return JSON.parse(JSON.stringify(templateWwObject));
         }
         /* wwManager:end */
     }
