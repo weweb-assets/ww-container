@@ -16,10 +16,9 @@
 <script>
 /* wwManager:start */
 import { mapGetters } from 'vuex';
-/* wwManager:end */
 import makeStories from './stories';
+/* wwManager:end */
 
-const CONTAINER_CONTENT_CHANGED = 'ww-container:content-changed';
 export default {
     name: '__COMPONENT_NAME__',
     props: {
@@ -154,8 +153,6 @@ export default {
                 await this.wwObjectCtrl.update(this.wwObject);
 
                 await this.wwObjectCtrl.globalEdit(result);
-
-                // await this.afterContentChanged();
             } catch (error) {
                 console.log(error);
             }
