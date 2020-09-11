@@ -6,7 +6,7 @@
 <template>
     <div class="ww-container" v-style="c_style">
         <wwLayout :options="wwObject.content.data.options" tag="div" :ww-list="wwObject.content.data.wwObjects" class="wwobjects-wrapper" @ww-add="add($event)" @ww-remove="remove($event)">
-            <wwObject v-for="(wwObject, index) in wwObject.content.data.wwObjects" :key="index" :ww-object="wwObject" :indexInBoundedParent="isRootCmsTemplate ? index : -1"></wwObject>
+            <wwObject v-for="(wwObject, index) in wwObject.content.data.wwObjects" :key="index" :ww-object="wwObject" :index-in-bound-parent.sync="index"></wwObject>
         </wwLayout>
     </div>
 </template>
@@ -23,7 +23,8 @@ export default {
     name: '__COMPONENT_NAME__',
     props: {
         // The wwObject controller object is passed. You can access it anytime
-        wwObjectCtrl: Object
+        wwObjectCtrl: Object,
+        bindings: Object
     },
     data() {
         return {
@@ -31,6 +32,11 @@ export default {
             d_screens: ['lg', 'md', 'sm', 'xs']
             /* wwManager:end */
         };
+    },
+    watch: {
+        'bindings.name'(newVal, oldVal) {
+            if (newVal !== oldVal) this.connectCmsCollection();
+        }
     },
     computed: {
         // The wwObject contains all the info and data about the wwObject
@@ -62,6 +68,7 @@ export default {
         }
         /* wwManager:end */
     },
+
     created() {
         this.initData();
         if (this.isRootCmsTemplate) this.initDataBindings();
@@ -99,8 +106,9 @@ export default {
         },
         /* wwManager:start */
         async initDataBindings() {
-            const collectionDescriptor = this.wwObjectCtrl.getCmsCollection(this.wwObject.content.cms.bindings.collection);
-            this.createBoundedChildren(collectionDescriptor);
+            const name = this.wwObject.content.cms.bindings.collection;
+            const descriptor = this.wwObjectCtrl.getNamedCollectionDescriptor(name);
+            this.createBoundedChildren(descriptor.children, name);
             await this.wwObjectCtrl.update(this.wwObject);
         },
 
@@ -169,21 +177,19 @@ export default {
         },
 
         async connectCmsCollection() {
-            const {
-                bindings: { collectionDescriptor }
-            } = await this.wwObjectCtrl.connectCmsCollection();
-            this.createBoundedChildren(collectionDescriptor);
-            this.wwObjectCtrl.update(this.wwObject);
-        },
-        createBoundedChildren(collectionDescriptor) {
-            const cmsTemplateId = this.wwObject.content.data.wwObjects[0].uniqueId;
-            const cmsTemplate = this.wwObjectCtrl.getWwObjectById(cmsTemplateId);
+            const { data, name } = this.bindings;
+            this.createBoundedChildren(data);
             this.wwObject.content.cms = {
                 bindings: {
-                    collection: collectionDescriptor.name
+                    collection: name
                 }
             };
-            this.wwObject.content.data.wwObjects = collectionDescriptor.data.map(() => {
+            await this.wwObjectCtrl.update(this.wwObject);
+        },
+        createBoundedChildren(data) {
+            const cmsTemplateId = this.wwObject.content.data.wwObjects[0].uniqueId;
+            const cmsTemplate = this.wwObjectCtrl.getWwObjectById(cmsTemplateId);
+            this.wwObject.content.data.wwObjects = data.map(() => {
                 return this.getCmsTemplateCopy(cmsTemplate);
             });
         },
