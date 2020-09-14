@@ -34,7 +34,7 @@ export default {
         };
     },
     watch: {
-        'bindings.name'(newVal, oldVal) {
+        'bindings.path'(newVal, oldVal) {
             if (newVal !== oldVal) this.connectCmsCollection();
         }
     },
@@ -64,7 +64,7 @@ export default {
         },
         isRootCmsTemplate() {
             const { cms } = this.wwObject.content;
-            return cms && Object(cms) === cms && Object(cms.bindings) === cms.bindings && cms.bindings.collection;
+            return cms && Object(cms) === cms && Object(cms.bindings) === cms.bindings && cms.bindings.path;
         }
 
         /* wwManager:end */
@@ -107,9 +107,9 @@ export default {
         },
         /* wwManager:start */
         async initDataBindings() {
-            const name = this.wwObject.content.cms.bindings.collection;
-            const { values } = this.wwObjectCtrl.getNamedCollectionDescriptor(name);
-            this.createBoundedChildren(values, name);
+            const path = this.wwObject.content.cms.bindings.path;
+            const { values } = this.wwObjectCtrl.getNamedCollectionDescriptor(path);
+            this.createBoundedChildren(values, path);
             await this.wwObjectCtrl.update(this.wwObject);
         },
 
@@ -178,11 +178,11 @@ export default {
         },
 
         async connectCmsCollection() {
-            const { data, name } = this.bindings;
-            this.createBoundedChildren(data, name);
+            const { data, path } = this.bindings;
+            this.createBoundedChildren(data);
             this.wwObject.content.cms = {
                 bindings: {
-                    collection: name
+                    path
                 }
             };
             await this.wwObjectCtrl.update(this.wwObject);
