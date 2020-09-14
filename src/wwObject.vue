@@ -6,7 +6,7 @@
 <template>
     <div class="ww-container" v-style="c_style">
         <wwLayout :options="wwObject.content.data.options" tag="div" :ww-list="wwObject.content.data.wwObjects" class="wwobjects-wrapper" @ww-add="add($event)" @ww-remove="remove($event)">
-            <wwObject v-for="(wwObject, index) in wwObject.content.data.wwObjects" :key="index" :ww-object="wwObject" :index-in-bound-parent.sync="index"></wwObject>
+            <wwObject v-for="(wwObject, index) in wwObject.content.data.wwObjects" :key="index" :ww-object="wwObject" :index-in-bound-parent="isRootCmsTemplate ? index : -1" :index="index"></wwObject>
         </wwLayout>
     </div>
 </template>
@@ -66,6 +66,7 @@ export default {
             const { cms } = this.wwObject.content;
             return cms && Object(cms) === cms && Object(cms.bindings) === cms.bindings && cms.bindings.collection;
         }
+
         /* wwManager:end */
     },
 
@@ -107,8 +108,8 @@ export default {
         /* wwManager:start */
         async initDataBindings() {
             const name = this.wwObject.content.cms.bindings.collection;
-            const descriptor = this.wwObjectCtrl.getNamedCollectionDescriptor(name);
-            this.createBoundedChildren(descriptor.children, name);
+            const { values } = this.wwObjectCtrl.getNamedCollectionDescriptor(name);
+            this.createBoundedChildren(values, name);
             await this.wwObjectCtrl.update(this.wwObject);
         },
 
@@ -178,7 +179,7 @@ export default {
 
         async connectCmsCollection() {
             const { data, name } = this.bindings;
-            this.createBoundedChildren(data);
+            this.createBoundedChildren(data, name);
             this.wwObject.content.cms = {
                 bindings: {
                     collection: name
