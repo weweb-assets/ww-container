@@ -1,8 +1,9 @@
 import './stories';
 
-export default async function openPopup(content) {
+export default async function openPopup(options) {
     try {
-        return await wwLib.wwPopups.open({ firstPage: 'WWCONTAINER_LAYOUT', data: { content } });
+        const updatedOptions = await wwLib.wwPopups.open({ firstPage: 'WWCONTAINER_LAYOUT', data: { options } });
+        return { options: updatedOptions };
     } catch (err) {
         return null;
     }

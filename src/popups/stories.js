@@ -26,9 +26,8 @@ wwLib.wwPopups.addStory('WWCONTAINER_LAYOUT', {
                 },
                 type: 'select',
                 key: 'direction',
-                valueData: 'content.direction',
+                valueData: 'options.direction',
                 options: {
-                    wwObject: {},
                     values: [
                         {
                             value: 'column',
@@ -39,7 +38,6 @@ wwLib.wwPopups.addStory('WWCONTAINER_LAYOUT', {
                         },
                         {
                             value: 'row',
-                            default: true,
                             text: {
                                 en: 'Row',
                                 fr: 'Ligne',
@@ -59,7 +57,7 @@ wwLib.wwPopups.addStory('WWCONTAINER_LAYOUT', {
                 },
                 type: 'radio',
                 key: 'reverse',
-                valueData: 'content.reverse',
+                valueData: 'options.reverse',
             },
             {
                 label: {
@@ -72,7 +70,7 @@ wwLib.wwPopups.addStory('WWCONTAINER_LAYOUT', {
                 },
                 type: 'select',
                 key: 'justifyContent',
-                valueData: 'content.justifyContent',
+                valueData: 'options.justifyContent',
                 options: {
                     wwObject: {},
                     values: [
@@ -133,9 +131,8 @@ wwLib.wwPopups.addStory('WWCONTAINER_LAYOUT', {
                 },
                 type: 'select',
                 key: 'alignItems',
-                valueData: 'content.alignItems',
+                valueData: 'options.alignItems',
                 options: {
-                    wwObject: {},
                     values: [
                         {
                             value: 'flex-start',
@@ -146,7 +143,6 @@ wwLib.wwPopups.addStory('WWCONTAINER_LAYOUT', {
                         },
                         {
                             value: 'center',
-                            default: true,
                             text: {
                                 en: 'Center',
                                 fr: 'Millieu',
@@ -179,21 +175,8 @@ wwLib.wwPopups.addStory('WWCONTAINER_LAYOUT', {
                     fr: '',
                 },
                 type: 'radio',
-                key: 'flexWrap',
-                valueData: 'content.flexWrap',
-            },
-            {
-                label: {
-                    en: 'Min height',
-                    fr: 'Hauteur minumale',
-                },
-                desc: {
-                    en: "Use 'px' or '%' as unit.",
-                    fr: "Utiliser 'px' ou '%' comme unité.",
-                },
-                type: 'text',
-                key: 'minHeight',
-                valueData: 'content.minHeight',
+                key: 'wrap',
+                valueData: 'options.wrap',
             },
         ],
     },

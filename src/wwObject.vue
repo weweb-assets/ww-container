@@ -1,5 +1,6 @@
 <template>
     <div class="ww-container">
+        <wwObject class="ww-container__background" isBackground v-bind="content.background"></wwObject>
         <wwLayout class="ww-container__layout" :style="style" path="wwObjects" />
         <!-- wwManager:start -->
         <div class="ww-container__handle" v-if="isEditing">
@@ -14,20 +15,18 @@
 import openPopup from './popups';
 /* wwEditor:end */
 
-const DEFAULT_OPTIONS = {
-    direction: 'row',
-    reverse: false,
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    flexWrap: 'nowrap',
-    minHeight: '25%',
-};
-
 export default {
     name: '__COMPONENT_NAME__',
     wwDefaultContent: {
+        background: { isWwObject: true, type: 'ww-color' },
         wwObjects: [],
-        options: {},
+        options: {
+            direction: 'row',
+            reverse: false,
+            justifyContent: 'space-around',
+            alignItems: 'center',
+            wrap: false,
+        },
     },
     props: {
         content: Object,
@@ -36,18 +35,16 @@ export default {
         /* wwEditor:end */
     },
     computed: {
-        options() {
-            return { ...DEFAULT_OPTIONS, ...this.content.options };
-        },
         style() {
             const style = {
-                direction: this.options.reverse ? `${this.options.direction}-reverse` : this.options.direction,
-                justifyContent: this.options.justifyContent,
-                alignItems: this.options.alignItems,
-                minHeight: this.options.minHeight,
+                flexDirection: this.content.options.reverse
+                    ? `${this.content.options.direction}-reverse`
+                    : this.content.options.direction,
+                justifyContent: this.content.options.justifyContent,
+                alignItems: this.content.options.alignItems,
             };
 
-            if (this.options.flexWrap) {
+            if (this.content.options.wrap) {
                 style.flexWrap = 'wrap';
             }
 
@@ -60,7 +57,7 @@ export default {
     methods: {
         /* wwEditor:start */
         async edit() {
-            const update = await openPopup(this.content);
+            const update = await openPopup(this.content.options);
             if (update) {
                 this.$emit('update', update);
             }
@@ -73,13 +70,22 @@ export default {
 <style scoped lang="scss">
 .ww-container {
     position: relative;
+    box-sizing: border-box;
     &__layout {
         display: flex;
+    }
+    &__background {
+        display: flex;
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        left: 0;
     }
     &__handle {
         position: absolute;
         display: flex;
-        top: 10px;
+        top: 0;
         right: 0;
         border-radius: 20px 0 0 20px;
         background-color: #d02e7c;
