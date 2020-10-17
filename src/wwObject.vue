@@ -1,9 +1,18 @@
 <template>
     <div class="ww-container">
         <wwObject class="ww-container__background" isBackground v-bind="content.background"></wwObject>
-        <wwLayout class="ww-container__layout" :style="style" path="wwObjects" />
+        <wwLayout class="ww-container__layout" :style="style" :direction="content.options.direction" path="wwObjects">
+            <template v-slot="{ item }">
+                <wwLayoutItem
+                    class="ww-container__item"
+                    :class="{ editing: isEditing, blue: level % 2 === 0, green: level % 2 === 1 }"
+                >
+                    <wwObject v-bind="item"></wwObject>
+                </wwLayoutItem>
+            </template>
+        </wwLayout>
         <!-- wwManager:start -->
-        <div class="ww-container__handle" v-if="isEditing">
+        <div class="ww-container__handle" :class="level % 2 ? 'left' : 'right'" v-if="isEditing">
             <span class="wwi wwi-align-right"></span>
         </div>
         <!-- wwManager:end -->
@@ -34,6 +43,14 @@ export default {
         wwEditorState: Object,
         /* wwEditor:end */
     },
+    inject: {
+        parentLevel: { from: 'level', default: 0 },
+    },
+    provide() {
+        return {
+            level: this.level,
+        };
+    },
     computed: {
         style() {
             const style = {
@@ -52,6 +69,9 @@ export default {
         },
         isEditing() {
             return this.wwEditorState.editMode === wwLib.wwSectionHelper.EDIT_MODES.CONTENT;
+        },
+        level() {
+            return this.parentLevel + 1;
         },
     },
     methods: {
@@ -82,12 +102,31 @@ export default {
         left: 0;
         left: 0;
     }
+    &__item {
+        box-sizing: border-box;
+        border: 1px solid transparent;
+        &.editing:hover {
+            border: 1px dashed;
+            &.green {
+                border-color: var(--ww-color-green-500);
+            }
+            &.blue {
+                border-color: var(--ww-color-blue-500);
+            }
+        }
+    }
     &__handle {
         position: absolute;
         display: flex;
         top: 0;
-        right: 0;
-        border-radius: 20px 0 0 20px;
+        &.right {
+            right: 0;
+            border-radius: 20px 0 0 20px;
+        }
+        &.left {
+            left: 0;
+            border-radius: 0px 20px 20px 0px;
+        }
         background-color: #d02e7c;
         z-index: 10;
         color: white;
