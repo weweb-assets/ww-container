@@ -26,7 +26,7 @@ wwLib.wwPopups.addStory('WWCONTAINER_LAYOUT', {
                 },
                 type: 'select',
                 key: 'direction',
-                valueData: 'options.direction',
+                valueData: 'direction',
                 options: {
                     values: [
                         {
@@ -45,138 +45,6 @@ wwLib.wwPopups.addStory('WWCONTAINER_LAYOUT', {
                         },
                     ],
                 },
-            },
-            {
-                label: {
-                    en: "Reverse elements' order",
-                    fr: "Inverser l'ordre des élements",
-                },
-                desc: {
-                    en: 'Show element in reverse order.',
-                    fr: 'Afficher les élements dans un sens inversé.',
-                },
-                type: 'radio',
-                key: 'reverse',
-                valueData: 'options.reverse',
-            },
-            {
-                label: {
-                    en: "Elements' position on primary axis",
-                    fr: "Position des élements sur l'axe principal",
-                },
-                desc: {
-                    en: '',
-                    fr: '',
-                },
-                type: 'select',
-                key: 'justifyContent',
-                valueData: 'options.justifyContent',
-                options: {
-                    wwObject: {},
-                    values: [
-                        {
-                            value: 'flex-start',
-                            text: {
-                                en: 'Start',
-                                fr: 'Début',
-                            },
-                        },
-                        {
-                            value: 'center',
-                            text: {
-                                en: 'Center',
-                                fr: 'Millieu',
-                            },
-                        },
-                        {
-                            value: 'flex-end',
-                            text: {
-                                en: 'End',
-                                fr: 'Fin',
-                            },
-                        },
-                        {
-                            value: 'space-between',
-                            default: true,
-                            text: {
-                                en: 'Space between elements',
-                                fr: 'Espace entre les élements',
-                            },
-                        },
-                        {
-                            value: 'space-around',
-                            text: {
-                                en: 'Space around elements',
-                                fr: 'Espace autours des élements',
-                            },
-                        },
-                        {
-                            value: 'space-evenly',
-                            text: {
-                                en: 'Even Spaces around elements',
-                                fr: 'Espace égaux autours des élements',
-                            },
-                        },
-                    ],
-                },
-            },
-            {
-                label: {
-                    en: "Elements' position on secondary axis",
-                    fr: "Position des élements sur l'axe secondaire",
-                },
-                desc: {
-                    en: '',
-                    fr: '',
-                },
-                type: 'select',
-                key: 'alignItems',
-                valueData: 'options.alignItems',
-                options: {
-                    values: [
-                        {
-                            value: 'flex-start',
-                            text: {
-                                en: 'Start',
-                                fr: 'Début',
-                            },
-                        },
-                        {
-                            value: 'center',
-                            text: {
-                                en: 'Center',
-                                fr: 'Millieu',
-                            },
-                        },
-                        {
-                            value: 'flex-end',
-                            text: {
-                                en: 'End',
-                                fr: 'Fin',
-                            },
-                        },
-                        {
-                            value: 'stretch',
-                            text: {
-                                en: 'Stretch',
-                                fr: 'Etirer',
-                            },
-                        },
-                    ],
-                },
-            },
-            {
-                label: {
-                    en: 'Wrap elements if needed (For rows only)',
-                    fr: "Mettre les élements à la ligne si necessaire (Pour l'affichage en lignes seulement)",
-                },
-                desc: {
-                    en: '',
-                    fr: '',
-                },
-                type: 'radio',
-                key: 'wrap',
-                valueData: 'options.wrap',
             },
         ],
     },

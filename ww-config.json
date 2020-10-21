@@ -4,7 +4,6 @@
         "label": { "en": "Container", "fr": "Container" },
         "editElementMenu": {
             "items": [{ "label": { "en": "Options", "fr": "Options" }, "action": "edit" }]
-        },
-        "noHover": true
+        }
     }
 }
