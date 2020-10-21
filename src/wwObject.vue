@@ -1,7 +1,6 @@
 <template>
     <div class="ww-container" :class="[this.level % 2 === 0 ? 'odd' : 'even', { editing: isEditing }]">
         <wwObject class="ww-container__background" isBackground v-bind="content.background"></wwObject>
-        {{ dragingIndex }}
         <wwLayout
             class="ww-container__layout"
             :class="content.direction"
