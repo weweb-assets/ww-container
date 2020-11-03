@@ -4,6 +4,7 @@
         <wwLayout
             class="ww-container__layout"
             :class="content.direction"
+            :style="layoutStyle"
             :direction="content.direction"
             path="wwObjects"
             ref="layout"
@@ -12,23 +13,31 @@
                 <wwLayoutItem
                     class="ww-container__item"
                     :class="[content.direction, { editing: isEditing, draging: dragingIndex === index }]"
-                    :style="{ flexGrow: content.grid ? content.grid[index] : 0, flexBasis: '0', flexShrink: '0' }"
+                    :style="getItemStyle(index)"
+                    ref="layoutItem"
                 >
-                    <wwObject v-bind="item"></wwObject>
+                    <wwObject v-bind="item" class="ww-container__object"></wwObject>
                     <!-- wwEditor:start -->
                     <template v-if="isEditing && content.direction === 'row'">
-                        <div
+                        <wwDraggable
+                            v-if="content.width === 'fit' && index > 0"
                             class="ww-container__handle start"
-                            v-if="index > 0"
-                            @mousedown="startDraging($event, index, 'start')"
                             data-is-ui
-                        ></div>
-                        <div
+                            @startDrag="startDrag($event, index, 'start')"
+                            @drag="drag($event)"
+                            @endDrag="endDrag($event)"
+                        />
+                        <wwDraggable
+                            v-if="content.width !== 'fit' || index < content.wwObjects.length - 1"
                             class="ww-container__handle end"
-                            v-if="index < content.wwObjects.length - 1"
-                            @mousedown="startDraging($event, index, 'end')"
                             data-is-ui
-                        ></div>
+                            @startDrag="startDrag($event, index, 'end')"
+                            @drag="drag($event)"
+                            @endDrag="endDrag($event)"
+                        />
+                        <div v-if="isDraging" class="ww-container__units">
+                            {{ content.grid ? content.grid[index] : 0 }}
+                        </div>
                     </template>
                     <!-- wwEditor:end -->
                 </wwLayoutItem>
@@ -43,9 +52,7 @@
 </template>
 
 <script>
-/* wwEditor:start */
-import openPopup from './popups';
-/* wwEditor:end */
+import { getRowConfiguration, getColumnConfiguration } from './configuration';
 
 export default {
     name: '__COMPONENT_NAME__',
@@ -54,6 +61,13 @@ export default {
         wwObjects: [],
         grid: [],
         direction: 'row',
+        lengthInUnit: 100,
+        width: 'fit',
+        justifyContent: 'center',
+        alignItems: 'start',
+    },
+    wwEditorConfiguration({ content }) {
+        return content.direction === 'row' ? getRowConfiguration(content) : getColumnConfiguration(content);
     },
     props: {
         content: Object,
@@ -71,7 +85,6 @@ export default {
     },
     data() {
         return {
-            lengthInUnit: 100,
             dragingHandle: 'start',
             dragingIndex: -1,
             mouseX: 0,
@@ -90,60 +103,85 @@ export default {
         isDraging() {
             return this.dragingIndex >= 0;
         },
-    },
-    methods: {
-        /* wwEditor:start */
-        async edit() {
-            const update = await openPopup(this.content);
-            if (update) {
-                this.$emit('update', update);
+        layoutStyle() {
+            if (this.content.direction === 'column') {
+                return {};
+            }
+            if (this.content.width === 'wrap') {
+                return { flexWrap: 'wrap', justifyContent: this.content.justifyContent };
+            } else if (this.content.width === 'scroll') {
+                return { overflowX: 'auto', width: '100%' };
+            } else {
+                return {};
             }
         },
+    },
+    methods: {
+        getItemStyle(index) {
+            if (this.content.direction === 'column') {
+                return {
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: this.content.alignItems,
+                };
+            }
+            const base = {
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: this.content.alignItems,
+            };
+            if (this.content.width === 'fit') {
+                return {
+                    ...base,
+                    flexGrow: this.content.grid ? this.content.grid[index] : 0,
+                    flexBasis: '0',
+                    flexShrink: '0',
+                };
+            } else {
+                const widthInUnit = this.content.grid ? this.content.grid[index] : 0;
+                return {
+                    ...base,
+                    width: `calc(${widthInUnit} * 100% / ${this.content.lengthInUnit})`,
+                    flexShrink: '0',
+                };
+            }
+        },
+        /* wwEditor:start */
         add(index) {
             this.$refs.layout.add(index);
         },
-        startDraging(event, index, handle) {
-            // Ignore right and middle click
-            if (event.button !== 0) return;
-            event.stopPropagation();
-            event.preventDefault();
-
-            wwLib.getManagerWindow().document.addEventListener('mousemove', this.onMouseMouve);
-            wwLib.getManagerWindow().document.addEventListener('mouseup', this.stopDraging, { once: true });
+        startDrag({ x }, index, handle) {
             this.dragingIndex = index;
             this.dragingHandle = handle;
-            this.mouseX = event.screenX;
+            this.mouseX = x;
+            if (this.$refs.layoutItem[0]) {
+                const { width } = this.$refs.layoutItem[0].getBoundingClientRect();
+                this.unitLengthInPx = (width / this.content.lengthInUnit) * this.content.grid[0];
+            } else {
+                this.unitLengthInPx = 10;
+            }
         },
-        stopDraging() {
-            // Ignore right and middle click
-            if (event.button !== 0) return;
-            wwLib.getManagerWindow().document.removeEventListener('mousemove', this.onMouseMouve);
+        endDrag() {
             this.dragingIndex = -1;
-
-            // Prevent click, which is different from mousedown
-            wwLib.getManagerWindow().document.addEventListener(
-                'click',
-                e => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                },
-                { once: true, capture: true }
-            );
         },
-        onMouseMouve(event) {
+        drag({ x }) {
             if (!this.isDraging) return;
-            const x = event.screenX;
-            if (Math.abs(x - this.mouseX) < 10) return;
-            const [min, max] =
-                this.dragingHandle === 'start'
-                    ? [this.dragingIndex - 1, this.dragingIndex]
-                    : [this.dragingIndex, this.dragingIndex + 1];
-            const fromIndex = x > this.mouseX ? max : min;
-            const toIndex = x > this.mouseX ? min : max;
-            this.drag(fromIndex, toIndex);
+            const distance = Math.abs(x - this.mouseX);
+            if (distance < this.unitLengthInPx) return;
+            if (this.content.width === 'fit') {
+                const [min, max] =
+                    this.dragingHandle === 'start'
+                        ? [this.dragingIndex - 1, this.dragingIndex]
+                        : [this.dragingIndex, this.dragingIndex + 1];
+                const fromIndex = x > this.mouseX ? max : min;
+                const toIndex = x > this.mouseX ? min : max;
+                this.transfer(fromIndex, toIndex);
+            } else {
+                this.mouseX > x ? this.decrease(this.dragingIndex) : this.increase(this.dragingIndex);
+            }
             this.mouseX = x;
         },
-        drag(fromIndex, toIndex, increment = 1) {
+        transfer(fromIndex, toIndex, increment = 1) {
             if (this.content.grid[fromIndex] > increment) {
                 const grid = this.content.grid.map((val, i) => {
                     if (i === fromIndex) return val - increment;
@@ -153,23 +191,47 @@ export default {
                 this.$emit('update', { grid });
             }
         },
+        increase(index, increment = 1) {
+            const grid = this.content.grid.map((val, i) => (i === index ? val + increment : val));
+            this.$emit('update', { grid });
+        },
+        decrease(index, increment = 1) {
+            const grid = this.content.grid.map((val, i) => (i === index ? Math.max(1, val - increment) : val));
+            this.$emit('update', { grid });
+        },
+        equalize() {
+            const itemLength = Math.ceil(this.content.lengthInUnit / this.content.wwObjects.length);
+            const lastItemLength = itemLength + (this.content.lengthInUnit % this.content.wwObjects.length);
+            const grid = this.content.wwObjects.map((_, i) => (i === 0 ? itemLength : lastItemLength));
+            this.$emit('update', { grid });
+        },
         /* wwEditor:end */
     },
     watch: {
         /* wwEditor:start */
         'content.wwObjects': {
-            immediate: true,
-            handler(objects, oldObjects = []) {
+            handler(objects, oldObjects) {
+                if (!oldObjects) return;
                 objects = objects || [];
+                if (!oldObjects) return;
                 if (objects.length === oldObjects.length) return;
                 if (objects.length === 0) {
                     this.$emit('update', { grid: [] });
                     return;
                 }
-                const itemLength = Math.ceil(this.lengthInUnit / objects.length);
-                const lastItemLength = itemLength + (this.lengthInUnit % objects.length);
-                const grid = objects.map((_, i) => (i === 0 ? itemLength : lastItemLength));
-                this.$emit('update', { grid });
+                this.equalize();
+            },
+        },
+        'content.lengthInUnit': {
+            handler() {
+                this.equalize();
+            },
+        },
+        'content.width': {
+            handler() {
+                if (this.content.width === 'fit') {
+                    this.equalize();
+                }
             },
         },
         isDraging(isDraging) {
@@ -249,6 +311,16 @@ export default {
         &.end {
             right: -3px;
         }
+    }
+    &__units {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: var(--ww-editor-color);
+        color: white;
+        font-size: 1.8rem;
+        padding: var(--ww-spacing-02);
     }
     &__menu {
         position: absolute;

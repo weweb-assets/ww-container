@@ -1,9 +1,6 @@
 {
     "componentPath": "./src/wwObject.vue",
     "editor": {
-        "label": { "en": "Container", "fr": "Container" },
-        "editElementMenu": {
-            "items": [{ "label": { "en": "Options", "fr": "Options" }, "action": "edit" }]
-        }
+        "label": { "en": "Container", "fr": "Container" }
     }
 }
