@@ -20,7 +20,7 @@
                     <!-- wwEditor:start -->
                     <template v-if="isEditing && content.direction === 'row'">
                         <wwDraggable
-                            v-if="content.width === 'fit' && index > 0"
+                            v-if="content.behavior === 'fit' && index > 0"
                             class="ww-container__handle start"
                             data-is-ui
                             @startDrag="startDrag($event, index, 'start')"
@@ -28,7 +28,7 @@
                             @endDrag="endDrag($event)"
                         />
                         <wwDraggable
-                            v-if="content.width !== 'fit' || index < content.wwObjects.length - 1"
+                            v-if="content.behavior !== 'fit' || index < content.wwObjects.length - 1"
                             class="ww-container__handle end"
                             data-is-ui
                             @startDrag="startDrag($event, index, 'end')"
@@ -62,7 +62,7 @@ export default {
         grid: [],
         direction: 'row',
         lengthInUnit: 100,
-        width: 'fit',
+        behavior: 'fit',
         justifyContent: 'center',
         alignItems: 'start',
     },
@@ -87,7 +87,6 @@ export default {
         return {
             dragingHandle: 'start',
             dragingIndex: -1,
-            mouseX: 0,
         };
     },
     computed: {
@@ -105,11 +104,14 @@ export default {
         },
         layoutStyle() {
             if (this.content.direction === 'column') {
-                return {};
+                return {
+                    height: '100%',
+                    justifyContent: this.content.justifyContent,
+                };
             }
-            if (this.content.width === 'wrap') {
+            if (this.content.behavior === 'wrap') {
                 return { flexWrap: 'wrap', justifyContent: this.content.justifyContent };
-            } else if (this.content.width === 'scroll') {
+            } else if (this.content.behavior === 'scroll') {
                 return { overflowX: 'auto', width: '100%' };
             } else {
                 return {};
@@ -119,18 +121,14 @@ export default {
     methods: {
         getItemStyle(index) {
             if (this.content.direction === 'column') {
-                return {
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: this.content.alignItems,
-                };
+                return {};
             }
             const base = {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: this.content.alignItems,
             };
-            if (this.content.width === 'fit') {
+            if (this.content.behavior === 'fit') {
                 return {
                     ...base,
                     flexGrow: this.content.grid ? this.content.grid[index] : 0,
@@ -150,53 +148,39 @@ export default {
         add(index) {
             this.$refs.layout.add(index);
         },
-        startDrag({ x }, index, handle) {
+        startDrag(event, index, handle) {
             this.dragingIndex = index;
             this.dragingHandle = handle;
-            this.mouseX = x;
-            if (this.$refs.layoutItem[0]) {
-                const { width } = this.$refs.layoutItem[0].getBoundingClientRect();
-                this.unitLengthInPx = (width / this.content.lengthInUnit) * this.content.grid[0];
-            } else {
-                this.unitLengthInPx = 10;
-            }
+            const { width } = this.$el.getBoundingClientRect();
+            this.unitLengthInPx = width / this.content.lengthInUnit;
+            this.initialGrid = [...this.content.grid];
         },
         endDrag() {
             this.dragingIndex = -1;
         },
-        drag({ x }) {
+        drag({ totalDeltaX }) {
             if (!this.isDraging) return;
-            const distance = Math.abs(x - this.mouseX);
-            if (distance < this.unitLengthInPx) return;
-            if (this.content.width === 'fit') {
-                const [min, max] =
-                    this.dragingHandle === 'start'
-                        ? [this.dragingIndex - 1, this.dragingIndex]
-                        : [this.dragingIndex, this.dragingIndex + 1];
-                const fromIndex = x > this.mouseX ? max : min;
-                const toIndex = x > this.mouseX ? min : max;
-                this.transfer(fromIndex, toIndex);
+            if (this.dragingHandle === 'start') {
+                totalDeltaX = -1 * totalDeltaX;
+            }
+            let newGridValue = Math.max(
+                1,
+                this.initialGrid[this.dragingIndex] + Math.round(totalDeltaX / this.unitLengthInPx)
+            );
+            if (this.content.behavior === 'fit') {
+                const fromIndex = this.dragingHandle === 'start' ? this.dragingIndex - 1 : this.dragingIndex + 1;
+                const sum = this.initialGrid[fromIndex] + this.initialGrid[this.dragingIndex];
+                newGridValue = Math.min(newGridValue, sum - 1);
+                this.setGridValue({ [this.dragingIndex]: newGridValue, [fromIndex]: sum - newGridValue });
             } else {
-                this.mouseX > x ? this.decrease(this.dragingIndex) : this.increase(this.dragingIndex);
-            }
-            this.mouseX = x;
-        },
-        transfer(fromIndex, toIndex, increment = 1) {
-            if (this.content.grid[fromIndex] > increment) {
-                const grid = this.content.grid.map((val, i) => {
-                    if (i === fromIndex) return val - increment;
-                    if (i === toIndex) return val + increment;
-                    return val;
-                });
-                this.$emit('update', { grid });
+                if (this.content.behavior === 'wrap') {
+                    newGridValue = Math.min(newGridValue, this.content.lengthInUnit);
+                }
+                this.setGridValue({ [this.dragingIndex]: newGridValue });
             }
         },
-        increase(index, increment = 1) {
-            const grid = this.content.grid.map((val, i) => (i === index ? val + increment : val));
-            this.$emit('update', { grid });
-        },
-        decrease(index, increment = 1) {
-            const grid = this.content.grid.map((val, i) => (i === index ? Math.max(1, val - increment) : val));
+        setGridValue(update) {
+            const grid = this.content.grid.map((val, i) => update[i] || val);
             this.$emit('update', { grid });
         },
         equalize() {
@@ -227,10 +211,14 @@ export default {
                 this.equalize();
             },
         },
-        'content.width': {
+        'content.behavior': {
             handler() {
-                if (this.content.width === 'fit') {
+                if (this.content.behavior === 'fit') {
                     this.equalize();
+                }
+                if (this.content.behavior === 'wrap') {
+                    const grid = this.content.grid.map(val => Math.min(val, this.content.lengthInUnit));
+                    this.$emit('update', { grid });
                 }
             },
         },
@@ -257,7 +245,6 @@ export default {
     &.even {
         --ww-editor-color: var(--ww-color-blue-500);
     }
-    color: white;
     position: relative;
     box-sizing: border-box;
     &__menu {
@@ -272,6 +259,20 @@ export default {
         display: flex;
         &.column {
             flex-direction: column;
+        }
+        &.row {
+            height: 100%;
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: #808080;
+        }
+        &::-webkit-scrollbar-track {
+            background-color: #ffffff00;
+        }
+        &::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+            background-color: #ffffff00;
         }
     }
     &__background {
@@ -296,20 +297,26 @@ export default {
             }
             border: 1px solid var(--ww-editor-color);
         }
+        &.column {
+            > * {
+                width: 100%;
+            }
+        }
     }
     &__handle {
         position: absolute;
         background-color: var(--ww-editor-color);
         height: 30px;
-        max-height: calc(100% - 10px);
-        top: calc(50% - 15px);
+        max-height: calc(100% - 6px);
+        top: 50%;
+        transform: translate(-50%, -50%);
         width: 6px;
         cursor: col-resize;
         &.start {
-            left: -3px;
+            left: 0;
         }
         &.end {
-            right: -3px;
+            left: 100%;
         }
     }
     &__units {

@@ -1,41 +1,24 @@
-const SIZE_HEIGHT = {
-    auto: true,
-    ratio: false,
-    fixed: [
-        {
-            unit: 'px',
-            min: 1,
-            max: 1000,
-        },
-        {
-            unit: 'vh',
-            min: 1,
-            max: 100,
-        },
-    ],
-};
-
 const COMMON_STYLE = {
     direction: {
         label: { en: 'Direction', fr: 'Direction' },
         type: 'TextSelect',
         options: {
             options: [
-                { value: 'row', label: { en: 'Vertical', fr: 'Vertical' } },
-                { value: 'column', label: { en: 'Horizontal', fr: 'Horizontal' } },
+                { value: 'row', label: { en: 'Horizontal', fr: 'Horizontal' } },
+                { value: 'column', label: { en: 'Vertical', fr: 'Vertical' } },
             ],
         },
     },
-    alignItems: {
-        label: { en: 'Alignement', fr: 'Alignement' },
-        type: 'TextSelect',
-        options: {
-            options: [
-                { value: 'flex-start', label: { en: 'Start', fr: 'Début' } },
-                { value: 'center', label: { en: 'Center', fr: 'Milieu' } },
-                { value: 'flex-end', label: { en: 'End', fr: 'Fin' } },
-            ],
-        },
+};
+const ALIGN_ITEMS = {
+    label: { en: 'Alignement', fr: 'Alignement' },
+    type: 'TextSelect',
+    options: {
+        options: [
+            { value: 'flex-start', label: { en: 'Start', fr: 'Début' } },
+            { value: 'center', label: { en: 'Center', fr: 'Milieu' } },
+            { value: 'flex-end', label: { en: 'End', fr: 'Fin' } },
+        ],
     },
 };
 const JUSTIFY_CONTENT = {
@@ -54,8 +37,8 @@ export function getRowConfiguration(content) {
     return {
         styleOptions: {
             ...COMMON_STYLE,
-            width: {
-                label: { en: 'Width', fr: 'Longueur' },
+            behavior: {
+                label: { en: 'Behavior', fr: 'Comportement' },
                 type: 'TextSelect',
                 options: {
                     options: [
@@ -65,18 +48,14 @@ export function getRowConfiguration(content) {
                     ],
                 },
             },
-            ...(content.width !== 'fit' && { justifyContent: JUSTIFY_CONTENT }),
+            alignItems: ALIGN_ITEMS,
+            ...(content.behavior !== 'fit' && { justifyContent: JUSTIFY_CONTENT }),
         },
         settingsOptions: {
             lengthInUnit: {
                 label: { en: 'Nb of units', fr: "Nb d'unité" },
                 type: 'Number',
             },
-        },
-        size: {
-            height: SIZE_HEIGHT,
-            width: false,
-            maxWidth: false,
         },
     };
 }
@@ -85,9 +64,7 @@ export function getColumnConfiguration() {
     return {
         styleOptions: {
             ...COMMON_STYLE,
-        },
-        size: {
-            height: SIZE_HEIGHT,
+            justifyContent: JUSTIFY_CONTENT,
         },
     };
 }
