@@ -36,9 +36,7 @@
                             @endDrag="endDrag($event)"
                         />
                         <div v-if="isDraging" class="ww-container__units">
-                            {{
-                                content.grid ? `content.grid[index]${this.content.lengthInUnit === 100 ? '%' : ''}` : 0
-                            }}
+                            {{ content.grid ? `content.grid[index]${content.lengthInUnit === 100 ? '%' : ''}` : 0 }}
                         </div>
                     </template>
                     <!-- wwEditor:end -->
