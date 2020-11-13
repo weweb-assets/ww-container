@@ -44,7 +44,7 @@
             </template>
         </wwLayout>
         <!-- wwEditor:start -->
-        <div class="ww-container__menu" :class="level % 2 ? 'right' : 'left'">
+        <div class="ww-container__menu" :class="level % 2 ? 'left' : 'right'">
             <wwEditorIcon small name="config"></wwEditorIcon>
         </div>
         <!-- wwEditor:end -->
