@@ -9,19 +9,25 @@
             path="wwObjects"
             ref="layout"
         >
-            <template v-slot="{ item, index }">
+            <template v-slot="{ layoutId, item, index }">
                 <wwLayoutItem
                     class="ww-container__item"
                     :class="[content.direction, { editing: isEditing, draging: dragingIndex === index }]"
                     :style="getItemStyle(index)"
                     ref="layoutItem"
                 >
-                    <wwObject v-bind="item" class="ww-container__object"></wwObject>
+                    <wwObject
+                        v-bind="item"
+                        class="ww-container__object"
+                        :data-ww-layout-id="layoutId"
+                        :data-ww-layout-index="index"
+                    ></wwObject>
                     <!-- wwEditor:start -->
                     <template v-if="isEditing && content.direction === 'row'">
                         <wwDraggable
                             v-if="content.behavior === 'fit' && index > 0"
                             class="ww-container__handle start"
+                            :class="{ active: isDraging }"
                             data-is-ui
                             @startDrag="startDrag($event, index, 'start')"
                             @drag="drag($event)"
@@ -30,6 +36,7 @@
                         <wwDraggable
                             v-if="content.behavior !== 'fit' || index < content.wwObjects.length - 1"
                             class="ww-container__handle end"
+                            :class="{ active: isDraging }"
                             data-is-ui
                             @startDrag="startDrag($event, index, 'end')"
                             @drag="drag($event)"
@@ -184,9 +191,9 @@ export default {
             this.$emit('update', { grid });
         },
         equalize() {
-            const itemLength = Math.ceil(this.content.lengthInUnit / this.content.wwObjects.length);
-            const lastItemLength = itemLength + (this.content.lengthInUnit % this.content.wwObjects.length);
-            const grid = this.content.wwObjects.map((_, i) => (i === 0 ? itemLength : lastItemLength));
+            const itemLength = Math.floor(this.content.lengthInUnit / this.content.wwObjects.length);
+            const firstItemLength = this.content.lengthInUnit - (this.content.wwObjects.length - 1) * itemLength;
+            const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
             this.$emit('update', { grid });
         },
         /* wwEditor:end */
@@ -248,11 +255,24 @@ export default {
     position: relative;
     box-sizing: border-box;
     &__menu {
-        display: none;
+        opacity: 0;
+        pointer-events: none;
     }
     &.editing:hover {
+        &:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 1px solid var(--ww-editor-color);
+            pointer-events: none;
+            z-index: 10;
+        }
         > .ww-container__menu {
-            display: flex;
+            opacity: 1;
+            pointer-events: all;
         }
     }
     &__layout {
@@ -286,7 +306,6 @@ export default {
     &__item {
         position: relative;
         box-sizing: border-box;
-        border: 1px solid transparent;
         .ww-container__handle {
             display: none;
         }
@@ -295,7 +314,17 @@ export default {
             > .ww-container__handle {
                 display: flex;
             }
-            border: 1px solid var(--ww-editor-color);
+            &:after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                border: 1px solid var(--ww-editor-color);
+                pointer-events: none;
+                z-index: 10;
+            }
         }
         &.column {
             > * {
@@ -305,13 +334,23 @@ export default {
     }
     &__handle {
         position: absolute;
-        background-color: var(--ww-editor-color);
-        height: 30px;
+        background: white;
+        height: 32px;
         max-height: calc(100% - 6px);
         top: 50%;
         transform: translate(-50%, -50%);
-        width: 6px;
-        cursor: col-resize;
+        width: 8px;
+        border: 1px solid var(--ww-color-green-500);
+        box-shadow: 0px 0px 3px #b8bbc0;
+        border-radius: 4px;
+        z-index: 12;
+        cursor: ew-resize;
+        transition: transform 0.2s ease;
+
+        &:hover,
+        &.active {
+            transform: translate(-50%, -50%) scale(1.2);
+        }
         &.start {
             left: 0;
         }
@@ -328,12 +367,32 @@ export default {
         color: white;
         font-size: 1.8rem;
         padding: var(--ww-spacing-02);
+        z-index: 3;
     }
     &__menu {
+        display: flex;
         position: absolute;
         top: 0;
         border-radius: 100%;
         padding: var(--ww-spacing-01);
+        transition: opacity 0.2s ease;
+        z-index: 11;
+        cursor: pointer;
+        background-color: var(--ww-editor-color);
+        color: white;
+        justify-content: center;
+        align-items: center;
+
+        &:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 30px;
+            height: 30px;
+        }
+
         &.right {
             right: 0;
             transform: translate(50%, -50%);
@@ -342,10 +401,6 @@ export default {
             left: 0;
             transform: translate(-50%, -50%);
         }
-        background-color: var(--ww-editor-color);
-        color: white;
-        justify-content: center;
-        align-items: center;
     }
 }
 </style>
