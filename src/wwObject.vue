@@ -9,19 +9,14 @@
             path="wwObjects"
             ref="layout"
         >
-            <template v-slot="{ layoutId, item, index }">
+            <template v-slot="{ item, index }">
                 <wwLayoutItem
                     class="ww-container__item"
                     :class="[content.direction, { editing: isEditing, draging: dragingIndex === index }]"
                     :style="getItemStyle(index)"
                     ref="layoutItem"
                 >
-                    <wwObject
-                        v-bind="item"
-                        class="ww-container__object"
-                        :data-ww-layout-id="layoutId"
-                        :data-ww-layout-index="index"
-                    ></wwObject>
+                    <wwObject v-bind="item" class="ww-container__object"></wwObject>
                     <!-- wwEditor:start -->
                     <template v-if="isEditing && content.direction === 'row'">
                         <wwDraggable
