@@ -9,7 +9,7 @@
             path="wwObjects"
             ref="layout"
         >
-            <template v-slot="{ layoutId, item, index }">
+            <template v-slot="{ layoutId, item, index }" class="ww-container__item">
                 <wwLayoutItem
                     class="ww-container__item"
                     :class="[content.direction, { editing: isEditing, draging: dragingIndex === index }]"
@@ -281,7 +281,6 @@ export default {
             flex-direction: column;
         }
         &.row {
-            min-height: inherit;
             height: 100%;
         }
         &::-webkit-scrollbar-thumb {
