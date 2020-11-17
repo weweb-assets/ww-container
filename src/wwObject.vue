@@ -281,6 +281,7 @@ export default {
             flex-direction: column;
         }
         &.row {
+            min-height: inherit;
             height: 100%;
         }
         &::-webkit-scrollbar-thumb {
