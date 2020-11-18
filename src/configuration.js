@@ -52,6 +52,18 @@ export function getRowConfiguration(content) {
             ...(content.behavior !== 'fit' && { justifyContent: JUSTIFY_CONTENT }),
         },
         settingsOptions: {
+            lengthInUnitRadio: {
+                path: 'lengthInUnit',
+                label: { en: 'Layout grid', fr: 'Grille' },
+                type: 'TextRadioGroup',
+                options: {
+                    choices: [
+                        { title: 'Percentage', value: 100, label: '%' },
+                        { title: '12 columns', value: 12, label: '12col' },
+                        { title: 'Portrait', value: 6, label: '6col' },
+                    ],
+                },
+            },
             lengthInUnit: {
                 label: { en: 'Nb of units', fr: "Nb d'unité" },
                 type: 'Number',
