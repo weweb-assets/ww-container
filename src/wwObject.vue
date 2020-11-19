@@ -1,6 +1,5 @@
 <template>
     <div class="ww-container" :class="[this.level % 2 === 0 ? 'odd' : 'even', { editing: isEditing }]">
-        <wwObject class="ww-container__background" isBackground v-bind="content.background"></wwObject>
         <wwLayout
             class="ww-container__layout"
             :class="content.direction"
@@ -64,7 +63,6 @@ import { getRowConfiguration, getColumnConfiguration } from './configuration';
 export default {
     name: '__COMPONENT_NAME__',
     wwDefaultContent: {
-        background: { isWwObject: true, type: 'ww-color' },
         wwObjects: [],
         grid: [],
         direction: 'row',
@@ -294,14 +292,6 @@ export default {
             height: 5px;
             background-color: #ffffff00;
         }
-    }
-    &__background {
-        display: flex;
-        position: absolute;
-        top: 0;
-        right: 0;
-        left: 0;
-        bottom: 0;
     }
     &__item {
         position: relative;
