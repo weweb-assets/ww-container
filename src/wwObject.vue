@@ -45,6 +45,7 @@
                             {{ content.grid ? `${content.grid[index]}${content.lengthInUnit === 100 ? '%' : ''}` : 0 }}
                         </div>
                     </template>
+                    <div class="border"></div>
                     <!-- wwEditor:end -->
                 </wwLayoutItem>
             </template>
@@ -256,9 +257,9 @@ export default {
         opacity: 0;
         pointer-events: none;
     }
+
     &.editing:hover {
-        &:after {
-            content: '';
+        & > .border {
             position: absolute;
             top: 0;
             left: 0;
@@ -304,8 +305,7 @@ export default {
             > .ww-container__handle {
                 display: flex;
             }
-            &:after {
-                content: '';
+            & > .border {
                 position: absolute;
                 top: 0;
                 left: 0;
