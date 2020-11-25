@@ -18,6 +18,7 @@ const ALIGN_ITEMS = {
             { value: 'flex-start', label: { en: 'Start', fr: 'Début' } },
             { value: 'center', label: { en: 'Center', fr: 'Milieu' } },
             { value: 'flex-end', label: { en: 'End', fr: 'Fin' } },
+            { value: 'stretch', label: { en: 'Stretch', fr: 'Stretch' } },
         ],
     },
 };
@@ -57,6 +58,17 @@ const BEHAVIOR = {
     },
 };
 
+const PUSH_LAST = {
+    label: { en: 'Push last', fr: 'Push last' },
+    type: 'TextRadioGroup',
+    options: {
+        choices: [
+            { title: 'off', value: false, label: 'Off' },
+            { title: 'on', value: true, label: 'On' },
+        ],
+    },
+};
+
 function getGrid(disabled) {
     return {
         lengthInUnitRadio: {
@@ -90,6 +102,7 @@ export function getRowConfiguration(content) {
             ...(content.type === 'grid' ? { behavior: BEHAVIOR } : null),
             alignItems: ALIGN_ITEMS,
             ...(content.type === 'flex' || content.behavior === 'wrap' ? { justifyContent: JUSTIFY_CONTENT } : null),
+            ...(content.type === 'flex' ? { pushLast: PUSH_LAST } : null),
         },
         settingsOptions: getGrid(content.type === 'flex'),
     };
@@ -100,6 +113,7 @@ export function getColumnConfiguration() {
         styleOptions: {
             ...COMMON_STYLE,
             justifyContent: JUSTIFY_CONTENT,
+            pushLast: PUSH_LAST,
         },
         settingsOptions: getGrid(true),
     };

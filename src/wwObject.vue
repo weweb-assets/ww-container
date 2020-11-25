@@ -5,13 +5,21 @@
             :class="content.direction"
             :style="layoutStyle"
             :direction="content.direction"
+            :placeholderIndex="mustPushLast ? -1 : null"
             path="wwObjects"
             ref="layout"
         >
             <template v-slot="{ layoutId, item, index }" class="ww-container__item">
                 <wwLayoutItem
                     class="ww-container__item"
-                    :class="[content.direction, { editing: isEditing, draging: dragingIndex === index }]"
+                    :class="[
+                        content.direction,
+                        {
+                            editing: isEditing,
+                            draging: dragingIndex === index,
+                            stretch: content.alignItems === 'stretch',
+                        },
+                    ]"
                     :style="getItemStyle(index)"
                     ref="layoutItem"
                 >
@@ -72,6 +80,7 @@ export default {
         behavior: 'fit',
         justifyContent: 'center',
         alignItems: 'start',
+        pushLast: false,
     },
     wwEditorConfiguration({ content }) {
         return content.direction === 'row' ? getRowConfiguration(content) : getColumnConfiguration(content);
@@ -127,35 +136,34 @@ export default {
                 return {};
             }
         },
+        mustPushLast() {
+            return (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
+        },
     },
     methods: {
         getItemStyle(index) {
             if (this.content.direction === 'column') {
                 return {};
             }
-            const base = {
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: this.content.alignItems,
-            };
+            let base;
+            if (this.content.alignItems === 'stretch') {
+                base = {};
+            } else {
+                base = {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: this.content.alignItems,
+                };
+            }
             if (this.content.type === 'flex') {
                 return { ...base, minWidth: '40px' };
             }
-            if (this.content.behavior === 'fit') {
-                return {
-                    ...base,
-                    flexGrow: this.content.grid ? this.content.grid[index] : 0,
-                    flexBasis: '0',
-                    flexShrink: '0',
-                };
-            } else {
-                const widthInUnit = this.content.grid ? this.content.grid[index] : 0;
-                return {
-                    ...base,
-                    width: `calc(${widthInUnit} * 100% / ${this.content.lengthInUnit})`,
-                    flexShrink: '0',
-                };
-            }
+            const widthInUnit = this.content.grid ? this.content.grid[index] : 0;
+            return {
+                ...base,
+                width: `calc(${widthInUnit} * 100% / ${this.content.lengthInUnit})`,
+                flexShrink: '0',
+            };
         },
         /* wwEditor:start */
         add(index) {
@@ -307,6 +315,9 @@ export default {
             height: 5px;
             background-color: #ffffff00;
         }
+        /deep/ > .ww-layout__placeholder {
+            flex: 1;
+        }
     }
     &__item {
         position: relative;
@@ -331,8 +342,13 @@ export default {
             }
         }
         &.column {
-            > * {
+            > .ww-container__object {
                 width: 100%;
+            }
+        }
+        &.row.stretch {
+            > .ww-container__object {
+                height: 100%;
             }
         }
     }
