@@ -29,46 +29,69 @@ const JUSTIFY_CONTENT = {
             { value: 'flex-start', label: { en: 'Start', fr: 'Début' } },
             { value: 'center', label: { en: 'Center', fr: 'Milieu' } },
             { value: 'flex-end', label: { en: 'End', fr: 'Fin' } },
+            { value: 'space-around', label: { en: 'Space around', fr: 'Space around' } },
+            { value: 'space-between', label: { en: 'Space between', fr: 'Space between' } },
         ],
     },
 };
+const TYPE = {
+    label: { en: 'Type', fr: 'Type' },
+    type: 'TextSelect',
+    options: {
+        options: [
+            { value: 'grid', label: { en: 'Grid', fr: 'Grille' } },
+            { value: 'flex', label: { en: 'Flex', fr: 'Flex' } },
+        ],
+    },
+};
+
+const BEHAVIOR = {
+    label: { en: 'Overflow', fr: 'Overflow' },
+    type: 'TextSelect',
+    options: {
+        options: [
+            { value: 'fit', label: { en: 'None', fr: 'Aucun' } },
+            { value: 'wrap', label: { en: 'Wrap', fr: 'A la ligne' } },
+            { value: 'scroll', label: { en: 'Scroll', fr: 'Scroll' } },
+        ],
+    },
+};
+
+function getGrid(disabled) {
+    return {
+        lengthInUnitRadio: {
+            path: 'lengthInUnit',
+            label: { en: 'Layout grid', fr: 'Grille' },
+            type: 'TextRadioGroup',
+            options: {
+                choices: [
+                    { title: 'Percentage', value: 100, label: '%' },
+                    { title: '12 columns', value: 12, label: '12col' },
+                    { title: 'Portrait', value: 6, label: '6col' },
+                ],
+                disabled,
+            },
+        },
+        lengthInUnit: {
+            label: { en: 'Nb of units', fr: "Nb d'unité" },
+            type: 'Number',
+            options: {
+                disabled,
+            },
+        },
+    };
+}
 
 export function getRowConfiguration(content) {
     return {
         styleOptions: {
             ...COMMON_STYLE,
-            behavior: {
-                label: { en: 'Behavior', fr: 'Comportement' },
-                type: 'TextSelect',
-                options: {
-                    options: [
-                        { value: 'fit', label: { en: 'Fit to container', fr: 'Taille du parent' } },
-                        { value: 'wrap', label: { en: 'Wrap', fr: 'A la ligne' } },
-                        { value: 'scroll', label: { en: 'Scroll', fr: 'Scroll' } },
-                    ],
-                },
-            },
+            type: TYPE,
+            ...(content.type === 'grid' ? { behavior: BEHAVIOR } : null),
             alignItems: ALIGN_ITEMS,
-            ...(content.behavior !== 'fit' && { justifyContent: JUSTIFY_CONTENT }),
+            ...(content.type === 'flex' || content.behavior === 'wrap' ? { justifyContent: JUSTIFY_CONTENT } : null),
         },
-        settingsOptions: {
-            lengthInUnitRadio: {
-                path: 'lengthInUnit',
-                label: { en: 'Layout grid', fr: 'Grille' },
-                type: 'TextRadioGroup',
-                options: {
-                    choices: [
-                        { title: 'Percentage', value: 100, label: '%' },
-                        { title: '12 columns', value: 12, label: '12col' },
-                        { title: 'Portrait', value: 6, label: '6col' },
-                    ],
-                },
-            },
-            lengthInUnit: {
-                label: { en: 'Nb of units', fr: "Nb d'unité" },
-                type: 'Number',
-            },
-        },
+        settingsOptions: getGrid(content.type === 'flex'),
     };
 }
 
@@ -78,5 +101,6 @@ export function getColumnConfiguration() {
             ...COMMON_STYLE,
             justifyContent: JUSTIFY_CONTENT,
         },
+        settingsOptions: getGrid(true),
     };
 }

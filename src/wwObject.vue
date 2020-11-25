@@ -22,7 +22,7 @@
                         :data-ww-layout-index="index"
                     ></wwObject>
                     <!-- wwEditor:start -->
-                    <template v-if="isEditing && content.direction === 'row'">
+                    <template v-if="isEditing && content.direction === 'row' && content.type === 'grid'">
                         <wwDraggable
                             v-if="content.behavior === 'fit' && index > 0"
                             class="ww-container__handle start"
@@ -68,6 +68,7 @@ export default {
         grid: [],
         direction: 'row',
         lengthInUnit: 100,
+        type: 'grid',
         behavior: 'fit',
         justifyContent: 'center',
         alignItems: 'start',
@@ -97,7 +98,7 @@ export default {
     },
     computed: {
         isEditing() {
-            return this.wwEditorState.editMode === wwLib.wwSectionHelper.EDIT_MODES.CONTENT;
+            return this.wwEditorState.editMode === wwLib.wwEditorHelper.EDIT_MODES.EDITION;
         },
         isSelected() {
             return this.wwEditorState.isSelected;
@@ -114,6 +115,9 @@ export default {
                     height: '100%',
                     justifyContent: this.content.justifyContent,
                 };
+            }
+            if (this.content.type === 'flex') {
+                return { flexWrap: 'wrap', justifyContent: this.content.justifyContent, width: '100%' };
             }
             if (this.content.behavior === 'wrap') {
                 return { flexWrap: 'wrap', justifyContent: this.content.justifyContent };
@@ -134,6 +138,9 @@ export default {
                 flexDirection: 'column',
                 justifyContent: this.content.alignItems,
             };
+            if (this.content.type === 'flex') {
+                return { ...base, minWidth: '40px' };
+            }
             if (this.content.behavior === 'fit') {
                 return {
                     ...base,
@@ -215,6 +222,13 @@ export default {
         'content.lengthInUnit': {
             handler() {
                 this.equalize();
+            },
+        },
+        'content.type': {
+            handler() {
+                if (this.content.type === 'grid') {
+                    this.equalize();
+                }
             },
         },
         'content.behavior': {
