@@ -1,6 +1,15 @@
 {
     "componentPath": "./src/wwObject.vue",
     "editor": {
-        "label": { "en": "Container", "fr": "Container" }
+        "label": { "en": "Container", "fr": "Container" },
+        "menuOptions": {
+            "items": [
+                {
+                    "name": "Background",
+                    "quick": [{ "type": "Background" }],
+                    "icon": "background"
+                }
+            ]
+        }
     }
 }
