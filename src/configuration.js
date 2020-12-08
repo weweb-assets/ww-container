@@ -10,20 +10,37 @@ const COMMON_STYLE = {
         },
     },
 };
-const ALIGN_ITEMS = {
-    label: { en: 'Alignement', fr: 'Alignement' },
-    type: 'TextSelect',
+const VERTICAL_ALIGN_ROW = {
+    label: { en: 'Vertical alignement', fr: 'Alignement vertical' },
+    type: 'TextRadioGroup',
     options: {
-        options: [
-            { value: 'flex-start', label: { en: 'Start', fr: 'Début' } },
-            { value: 'center', label: { en: 'Center', fr: 'Milieu' } },
-            { value: 'flex-end', label: { en: 'End', fr: 'Fin' } },
-            { value: 'stretch', label: { en: 'Stretch', fr: 'Stretch' } },
+        choices: [
+            { value: 'flex-start', title: { en: 'Start', fr: 'Début' }, icon: 'align-y-start' },
+            { value: 'center', title: { en: 'Center', fr: 'Milieu' }, icon: 'align-y-center' },
+            { value: 'flex-end', title: { en: 'End', fr: 'Fin' }, icon: 'align-y-end' },
+            { value: 'stretch', title: { en: 'Stretch', fr: 'Stretch' }, icon: 'align-y-stretch' },
+            { value: 'baseline', title: { en: 'Baseline', fr: 'Baseline' }, icon: 'align-y-baseline' },
+        ],
+    },
+};
+const HORIZONTAL_ALIGN_ROW = {
+    label: { en: 'Horizontal alignement', fr: 'Horizontal vertical' },
+    type: 'TextRadioGroup',
+    options: {
+        choices: [
+            { value: 'flex-start', title: { en: 'Start', fr: 'Début' }, icon: 'align-x-start' },
+            { value: 'center', title: { en: 'Center', fr: 'Milieu' }, icon: 'align-x-center' },
+            { value: 'flex-end', title: { en: 'End', fr: 'Fin' }, icon: 'align-x-end' },
+            { value: 'space-around', title: { en: 'Space around', fr: 'Space around' }, icon: 'align-x-space-around' },
+            {
+                value: 'space-between',
+                title: { en: 'Space between', fr: 'Space between' },
+                icon: 'align-x-space-between',
+            },
         ],
     },
 };
 const JUSTIFY_CONTENT = {
-    label: { en: 'Justify content', fr: 'Alignement du contenu' },
     type: 'TextSelect',
     options: {
         options: [
@@ -36,30 +53,30 @@ const JUSTIFY_CONTENT = {
     },
 };
 const TYPE = {
-    label: { en: 'Type', fr: 'Type' },
+    label: { en: 'Arrangement', fr: 'Arrangement' },
     type: 'TextSelect',
     options: {
         options: [
-            { value: 'grid', label: { en: 'Grid', fr: 'Grille' } },
-            { value: 'flex', label: { en: 'Flex', fr: 'Flex' } },
+            { value: 'grid', label: { en: 'Columns', fr: 'Colonnes' } },
+            { value: 'flex', label: { en: 'Row (flex)', fr: 'Row (flex)' } },
         ],
     },
 };
 
 const BEHAVIOR = {
-    label: { en: 'Overflow', fr: 'Overflow' },
+    label: { en: 'Line breaks (wrap)', fr: 'Line breaks (wrap)' },
     type: 'TextSelect',
     options: {
         options: [
-            { value: 'fit', label: { en: 'None', fr: 'Aucun' } },
-            { value: 'wrap', label: { en: 'Wrap', fr: 'A la ligne' } },
-            { value: 'scroll', label: { en: 'Scroll', fr: 'Scroll' } },
+            { value: 'fit', label: { en: 'Fit onto one line', fr: 'Sur une ligne' } },
+            { value: 'wrap', label: { en: 'Wrap onto multiple lines', fr: 'A la ligne' } },
+            { value: 'scroll', label: { en: 'Scroll onto one line', fr: 'Scroll sur une ligne' } },
         ],
     },
 };
 
 const PUSH_LAST = {
-    label: { en: 'Push last', fr: 'Push last' },
+    label: { en: 'Push last to the end', fr: 'Push last to the end' },
     type: 'TextRadioGroup',
     options: {
         choices: [
@@ -69,28 +86,31 @@ const PUSH_LAST = {
     },
 };
 
-function getGrid(disabled) {
+function getGrid(disabled, lengthInUnit) {
     return {
         lengthInUnitRadio: {
             path: 'lengthInUnit',
-            label: { en: 'Layout grid', fr: 'Grille' },
+            label: { en: 'Grid system', fr: 'Grille' },
             type: 'TextRadioGroup',
             options: {
                 choices: [
                     { title: 'Percentage', value: 100, label: '%' },
-                    { title: '12 columns', value: 12, label: '12col' },
-                    { title: 'Portrait', value: 6, label: '6col' },
+                    { title: 'Columns', value: 12, label: 'U', default: true },
                 ],
                 disabled,
             },
         },
-        lengthInUnit: {
-            label: { en: 'Nb of units', fr: "Nb d'unité" },
-            type: 'Number',
-            options: {
-                disabled,
-            },
-        },
+        ...(lengthInUnit === 100
+            ? null
+            : {
+                  lengthInUnit: {
+                      label: { en: 'Number of units', fr: "Nb d'unité" },
+                      type: 'Number',
+                      options: {
+                          disabled,
+                      },
+                  },
+              }),
     };
 }
 
@@ -100,21 +120,26 @@ export function getRowConfiguration(content) {
             ...COMMON_STYLE,
             type: TYPE,
             ...(content.type === 'grid' ? { behavior: BEHAVIOR } : null),
-            alignItems: ALIGN_ITEMS,
-            ...(content.type === 'flex' || content.behavior === 'wrap' ? { justifyContent: JUSTIFY_CONTENT } : null),
+            alignItems: VERTICAL_ALIGN_ROW,
+            ...(content.type === 'flex' || content.behavior === 'wrap'
+                ? { justifyContent: HORIZONTAL_ALIGN_ROW }
+                : null),
             ...(content.type === 'flex' ? { pushLast: PUSH_LAST } : null),
         },
-        settingsOptions: getGrid(content.type === 'flex'),
+        settingsOptions: getGrid(content.type === 'flex', content.lengthInUnit),
     };
 }
 
-export function getColumnConfiguration() {
+export function getColumnConfiguration(content) {
     return {
         styleOptions: {
             ...COMMON_STYLE,
-            justifyContent: JUSTIFY_CONTENT,
+            justifyContent: {
+                ...JUSTIFY_CONTENT,
+                label: { en: 'Vertical alignement', fr: 'Alignement vertical' },
+            },
             pushLast: PUSH_LAST,
         },
-        settingsOptions: getGrid(true),
+        settingsOptions: getGrid(true, content.lengthInUnit),
     };
 }
