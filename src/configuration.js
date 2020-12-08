@@ -40,15 +40,23 @@ const HORIZONTAL_ALIGN_ROW = {
         ],
     },
 };
-const JUSTIFY_CONTENT = {
-    type: 'TextSelect',
+const VERTICAL_ALIGNEMENT_COLUMN = {
+    type: 'TextRadioGroup',
     options: {
         options: [
-            { value: 'flex-start', label: { en: 'Start', fr: 'Début' } },
-            { value: 'center', label: { en: 'Center', fr: 'Milieu' } },
-            { value: 'flex-end', label: { en: 'End', fr: 'Fin' } },
-            { value: 'space-around', label: { en: 'Space around', fr: 'Space around' } },
-            { value: 'space-between', label: { en: 'Space between', fr: 'Space between' } },
+            { value: 'flex-start', title: { en: 'Start', fr: 'Début' }, icon: 'align-x-start-vertical' },
+            { value: 'center', title: { en: 'Center', fr: 'Milieu' }, icon: 'align-x-center-vertical' },
+            { value: 'flex-end', title: { en: 'End', fr: 'Fin' }, icon: 'align-x-end-vertical' },
+            {
+                value: 'space-around',
+                title: { en: 'Space around', fr: 'Space around' },
+                icon: 'align-x-space-around-vertical',
+            },
+            {
+                value: 'space-between',
+                title: { en: 'Space between', fr: 'Space between' },
+                icon: 'align-x-space-between-vertical',
+            },
         ],
     },
 };
@@ -135,7 +143,7 @@ export function getColumnConfiguration(content) {
         styleOptions: {
             ...COMMON_STYLE,
             justifyContent: {
-                ...JUSTIFY_CONTENT,
+                ...VERTICAL_ALIGNEMENT_COLUMN,
                 label: { en: 'Vertical alignement', fr: 'Alignement vertical' },
             },
             pushLast: PUSH_LAST,
