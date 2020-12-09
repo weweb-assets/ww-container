@@ -85,13 +85,7 @@ const BEHAVIOR = {
 
 const PUSH_LAST = {
     label: { en: 'Push last to the end', fr: 'Push last to the end' },
-    type: 'TextRadioGroup',
-    options: {
-        choices: [
-            { title: 'off', value: false, label: 'Off' },
-            { title: 'on', value: true, label: 'On' },
-        ],
-    },
+    type: 'OnOff',
 };
 
 function getGrid(disabled, lengthInUnit) {
