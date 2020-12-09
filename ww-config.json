@@ -5,6 +5,11 @@
         "menuOptions": {
             "items": [
                 {
+                    "name": "Sizing",
+                    "quick": [{ "type": "Sizing" }],
+                    "icon": "sizing"
+                },
+                {
                     "name": "Background",
                     "quick": [{ "type": "Background" }],
                     "icon": "background"
