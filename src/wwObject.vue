@@ -85,6 +85,8 @@ export default {
         pushLast: wwLib.responsive(false),
     },
     wwEditorConfiguration({ content }) {
+        console.log(content);
+
         return content.direction === 'row' ? getRowConfiguration(content) : getColumnConfiguration(content);
     },
     props: {

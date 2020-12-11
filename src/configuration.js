@@ -43,7 +43,7 @@ const HORIZONTAL_ALIGN_ROW = {
 const VERTICAL_ALIGNEMENT_COLUMN = {
     type: 'TextRadioGroup',
     options: {
-        options: [
+        choices: [
             { value: 'flex-start', title: { en: 'Start', fr: 'Début' }, icon: 'align-x-start-vertical' },
             { value: 'center', title: { en: 'Center', fr: 'Milieu' }, icon: 'align-x-center-vertical' },
             { value: 'flex-end', title: { en: 'End', fr: 'Fin' }, icon: 'align-x-end-vertical' },
