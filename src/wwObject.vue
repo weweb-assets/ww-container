@@ -4,6 +4,7 @@
             class="ww-container__layout"
             :class="content.direction"
             :style="layoutStyle"
+            ww-responsive="ww-layout"
             :direction="content.direction"
             :placeholderIndex="mustPushLast ? -1 : null"
             path="wwObjects"
@@ -21,6 +22,7 @@
                         },
                     ]"
                     :style="getItemStyle(index)"
+                    :ww-responsive="`index-${index}`"
                     ref="layoutItem"
                 >
                     <wwObject
@@ -73,14 +75,14 @@ export default {
     name: '__COMPONENT_NAME__',
     wwDefaultContent: {
         wwObjects: [],
-        grid: [],
-        direction: 'row',
-        lengthInUnit: 100,
-        type: 'grid',
-        behavior: 'fit',
-        justifyContent: 'center',
-        alignItems: 'start',
-        pushLast: false,
+        grid: wwLib.responsive([]),
+        direction: wwLib.responsive('row'),
+        lengthInUnit: wwLib.responsive(100),
+        type: wwLib.responsive('grid'),
+        behavior: wwLib.responsive('fit'),
+        justifyContent: wwLib.responsive('center'),
+        alignItems: wwLib.responsive('start'),
+        pushLast: wwLib.responsive(false),
     },
     wwEditorConfiguration({ content }) {
         return content.direction === 'row' ? getRowConfiguration(content) : getColumnConfiguration(content);
@@ -205,8 +207,13 @@ export default {
             this.$emit('update', { grid });
         },
         equalize() {
-            const itemLength = Math.floor(this.content.lengthInUnit / this.content.wwObjects.length);
-            const firstItemLength = this.content.lengthInUnit - (this.content.wwObjects.length - 1) * itemLength;
+            let lengthInUnit = this.content.lengthInUnit;
+            if (this.content.lengthInUnit < this.content.wwObjects.length) {
+                this.$emit('update', { lengthInUnit: this.content.wwObjects.length });
+                lengthInUnit = this.content.wwObjects.length;
+            }
+            const itemLength = Math.floor(lengthInUnit / this.content.wwObjects.length);
+            const firstItemLength = lengthInUnit - (this.content.wwObjects.length - 1) * itemLength;
             const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
             this.$emit('update', { grid });
         },
@@ -246,6 +253,7 @@ export default {
                 }
                 if (this.content.behavior === 'wrap') {
                     const grid = this.content.grid.map(val => Math.min(val, this.content.lengthInUnit));
+
                     this.$emit('update', { grid });
                 }
             },
@@ -343,7 +351,7 @@ export default {
         }
         &.column {
             > .ww-container__object {
-                width: 100%;
+                // width: 100%;
             }
         }
         &.row.stretch {
