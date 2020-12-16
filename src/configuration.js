@@ -9,6 +9,16 @@ const COMMON_STYLE = {
             ],
         },
     },
+    reverse: {
+        label: { en: 'Reverse order', fr: "Inverser l'ordre" },
+        type: 'TextRadioGroup',
+        options: {
+            choices: [
+                { title: 'off', value: false, default: true, label: 'Off' },
+                { title: 'on', value: true, label: 'On' },
+            ],
+        },
+    },
 };
 const VERTICAL_ALIGN_ROW = {
     label: { en: 'Vertical alignement', fr: 'Alignement vertical' },
