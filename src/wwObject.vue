@@ -223,8 +223,16 @@ export default {
             this.$emit('update', { grid });
         },
         equalize() {
+            if (this.content.behavior === 'wrap') {
+                return;
+            }
+
             let lengthInUnit = this.content.lengthInUnit;
-            if (this.content.lengthInUnit < this.content.wwObjects.length) {
+            if (this.content.grid.reduce((total, value) => total + value, 0) === lengthInUnit) {
+                return;
+            }
+
+            if (lengthInUnit < this.content.wwObjects.length) {
                 this.$emit('update', { lengthInUnit: this.content.wwObjects.length });
                 lengthInUnit = this.content.wwObjects.length;
             }
