@@ -31,7 +31,7 @@
                         :data-ww-layout-id="layoutId"
                         :data-ww-layout-index="index"
                     ></wwObject>
-                    <!-- wwEditor:start -->
+                    <!-- wwManager:start -->
                     <template v-if="isEditing && content.direction === 'row' && content.type === 'grid'">
                         <wwDraggable
                             v-if="content.behavior === 'fit' && index > 0"
@@ -56,15 +56,15 @@
                         </div>
                     </template>
                     <div class="border"></div>
-                    <!-- wwEditor:end -->
+                    <!-- wwManager:end -->
                 </wwLayoutItem>
             </template>
         </wwLayout>
-        <!-- wwEditor:start -->
+        <!-- wwManager:start -->
         <div class="ww-container__menu" :class="level % 2 ? 'left' : 'right'">
             <wwEditorIcon small name="config"></wwEditorIcon>
         </div>
-        <!-- wwEditor:end -->
+        <!-- wwManager:end -->
     </div>
 </template>
 
@@ -111,7 +111,10 @@ export default {
     },
     computed: {
         isEditing() {
+            /* wwEditor:start */
             return this.wwEditorState.editMode === wwLib.wwEditorHelper.EDIT_MODES.EDITION;
+            /* wwEditor:end */
+            return false;
         },
         isSelected() {
             return this.wwEditorState.isSelected;
