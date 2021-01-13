@@ -14,11 +14,9 @@
                 <wwLayoutItem
                     class="ww-container__item"
                     :class="[
-                        content.direction,
                         {
                             editing: isEditing,
                             draging: dragingIndex === index,
-                            stretch: content.alignItems === 'stretch',
                         },
                     ]"
                     :style="getItemStyle(index)"
@@ -30,6 +28,8 @@
                         class="ww-container__object"
                         :data-ww-layout-id="layoutId"
                         :data-ww-layout-index="index"
+                        :style="wwObjectStyle"
+                        :ww-responsive="`wwobject-${index}`"
                     ></wwObject>
                     <!-- wwManager:start -->
                     <template v-if="isEditing && content.direction === 'row' && content.type === 'grid'">
@@ -77,6 +77,7 @@ export default {
         wwObjects: [],
         grid: wwLib.responsive([]),
         direction: wwLib.responsive('row'),
+        reverse: wwLib.responsive(false),
         lengthInUnit: wwLib.responsive(100),
         type: wwLib.responsive('grid'),
         behavior: wwLib.responsive('fit'),
@@ -85,8 +86,6 @@ export default {
         pushLast: wwLib.responsive(false),
     },
     wwEditorConfiguration({ content }) {
-        console.log(content);
-
         return content.direction === 'row' ? getRowConfiguration(content) : getColumnConfiguration(content);
     },
     props: {
@@ -126,22 +125,37 @@ export default {
             return this.dragingIndex >= 0;
         },
         layoutStyle() {
+            const style = {};
+
+            //DIRECTION
+            style.flexDirection = `${this.content.direction}${this.content.reverse ? '-reverse' : ''}`;
+
+            style.width = 'unset';
+            style.flexWrap = 'unset';
+            style.justifyContent = 'unset';
+            style.overflowX = 'visible';
+
             if (this.content.direction === 'column') {
-                return {
-                    height: '100%',
-                    justifyContent: this.content.justifyContent,
-                };
-            }
-            if (this.content.type === 'flex') {
-                return { flexWrap: 'wrap', justifyContent: this.content.justifyContent, width: '100%' };
-            }
-            if (this.content.behavior === 'wrap') {
-                return { flexWrap: 'wrap', justifyContent: this.content.justifyContent };
+                style.justifyContent = this.content.justifyContent;
+            } else if (this.content.type === 'flex') {
+                style.width = '100%';
+                style.flexWrap = 'wrap';
+                style.justifyContent = this.content.justifyContent;
+            } else if (this.content.behavior === 'wrap') {
+                style.flexWrap = 'wrap';
+                style.justifyContent = this.content.justifyContent;
             } else if (this.content.behavior === 'scroll') {
-                return { overflowX: 'auto', width: '100%' };
-            } else {
-                return {};
+                style.overflowX = 'auto';
+                style.width = '100%';
             }
+
+            return style;
+        },
+        wwObjectStyle() {
+            if (this.content.alignItems === 'stretch') {
+                return { height: '100%' };
+            }
+            return { height: 'auto' };
         },
         mustPushLast() {
             return (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
@@ -212,8 +226,16 @@ export default {
             this.$emit('update', { grid });
         },
         equalize() {
+            if (this.content.behavior === 'wrap') {
+                return;
+            }
+
             let lengthInUnit = this.content.lengthInUnit;
-            if (this.content.lengthInUnit < this.content.wwObjects.length) {
+            if (this.content.grid.reduce((total, value) => total + value, 0) === lengthInUnit) {
+                return;
+            }
+
+            if (lengthInUnit < this.content.wwObjects.length) {
                 this.$emit('update', { lengthInUnit: this.content.wwObjects.length });
                 lengthInUnit = this.content.wwObjects.length;
             }
@@ -311,12 +333,7 @@ export default {
     }
     &__layout {
         display: flex;
-        &.column {
-            flex-direction: column;
-        }
-        &.row {
-            height: 100%;
-        }
+        height: 100%;
         &::-webkit-scrollbar-thumb {
             background-color: #808080;
         }
@@ -352,16 +369,6 @@ export default {
                 border: 1px solid var(--ww-editor-color);
                 pointer-events: none;
                 z-index: 10;
-            }
-        }
-        &.column {
-            > .ww-container__object {
-                // width: 100%;
-            }
-        }
-        &.row.stretch {
-            > .ww-container__object {
-                height: 100%;
             }
         }
     }
