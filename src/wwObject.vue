@@ -231,7 +231,10 @@ export default {
             }
 
             let lengthInUnit = this.content.lengthInUnit;
-            if (this.content.grid.reduce((total, value) => total + value, 0) === lengthInUnit) {
+            if (
+                this.content.grid.reduce((total, value) => total + value, 0) === lengthInUnit &&
+                this.content.grid.length === this.content.wwObjects.length
+            ) {
                 return;
             }
 
