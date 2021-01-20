@@ -115,6 +115,9 @@ export default {
             /* wwEditor:end */
             return false;
         },
+        screenSize() {
+            return this.$store.getters['front/getScreenSize'];
+        },
         isSelected() {
             return this.wwEditorState.isSelected;
         },
@@ -226,26 +229,25 @@ export default {
             this.$emit('update', { grid });
         },
         equalize() {
-            if (this.content.behavior === 'wrap') {
-                return;
-            }
-
+            //fit -> total = length
+            //wrap -> total != length
+            //scroll -> total != length
+            //flex -> total != length
             let lengthInUnit = this.content.lengthInUnit;
-            if (
-                this.content.grid.reduce((total, value) => total + value, 0) === lengthInUnit &&
-                this.content.grid.length === this.content.wwObjects.length
-            ) {
-                return;
-            }
 
-            if (lengthInUnit < this.content.wwObjects.length) {
+            //Set lenght unit to at list wwObject length if fit mode
+            if (this.content.behavior === 'fit' && lengthInUnit < this.content.wwObjects.length) {
                 this.$emit('update', { lengthInUnit: this.content.wwObjects.length });
                 lengthInUnit = this.content.wwObjects.length;
             }
-            const itemLength = Math.floor(lengthInUnit / this.content.wwObjects.length);
-            const firstItemLength = lengthInUnit - (this.content.wwObjects.length - 1) * itemLength;
-            const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
-            this.$emit('update', { grid });
+
+            //Grid length not same as wwObject length
+            if (this.content.grid.length != this.content.wwObjects.length) {
+                const itemLength = Math.floor(lengthInUnit / this.content.wwObjects.length);
+                const firstItemLength = lengthInUnit - (this.content.wwObjects.length - 1) * itemLength;
+                const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
+                this.$emit('update', { grid });
+            }
         },
         /* wwEditor:end */
     },
@@ -286,6 +288,11 @@ export default {
 
                     this.$emit('update', { grid });
                 }
+            },
+        },
+        screenSize: {
+            handler() {
+                this.equalize();
             },
         },
         isDraging(isDraging) {
