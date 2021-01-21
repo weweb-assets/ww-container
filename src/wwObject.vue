@@ -1,5 +1,5 @@
 <template>
-    <div class="ww-container" :class="[this.level % 2 === 0 ? 'odd' : 'even', { editing: isEditing }]">
+    <div class="ww-container" :class="[level % 2 === 0 ? 'blue' : 'green', { editing: isEditing }]">
         <wwLayout
             class="ww-container__layout"
             :class="content.direction"
@@ -61,7 +61,7 @@
             </template>
         </wwLayout>
         <!-- wwManager:start -->
-        <div class="ww-container__menu" :class="level % 2 ? 'left' : 'right'">
+        <div class="ww-container__menu" :style="{ '--ww-container-menu-offset': menuSize }">
             <wwEditorIcon small name="config"></wwEditorIcon>
         </div>
         <!-- wwManager:end -->
@@ -163,6 +163,11 @@ export default {
         mustPushLast() {
             return (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
         },
+        /* wwEditor:start */
+        menuSize() {
+            return `${6 * (this.level - 1)}px`;
+        },
+        /* wwEditor:end */
     },
     methods: {
         getItemStyle(index) {
@@ -312,35 +317,16 @@ export default {
 
 <style scoped lang="scss">
 .ww-container {
-    &.odd {
-        --ww-editor-color: var(--ww-color-green-500);
-    }
-    &.even {
-        --ww-editor-color: var(--ww-color-blue-500);
-    }
     position: relative;
     box-sizing: border-box;
-    &__menu {
-        opacity: 0;
-        pointer-events: none;
+
+    &.blue {
+        --ww-container-color: var(--ww-color-green-400);
+    }
+    &.green {
+        --ww-container-color: var(--ww-color-blue-500);
     }
 
-    &.editing:hover {
-        & > .border {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border: 1px solid var(--ww-editor-color);
-            pointer-events: none;
-            z-index: 10;
-        }
-        > .ww-container__menu {
-            opacity: 1;
-            pointer-events: all;
-        }
-    }
     &__layout {
         display: flex;
         height: 100%;
@@ -376,7 +362,7 @@ export default {
                 left: 0;
                 right: 0;
                 bottom: 0;
-                border: 1px solid var(--ww-editor-color);
+                border: 1px solid var(--ww-container-color);
                 pointer-events: none;
                 z-index: 10;
             }
@@ -413,43 +399,62 @@ export default {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background-color: var(--ww-editor-color);
+        background-color: var(--ww-container-color);
         color: white;
         font-size: 1.8rem;
         padding: var(--ww-spacing-02);
         z-index: 3;
     }
     &__menu {
+        opacity: 0;
+        pointer-events: none;
         display: flex;
         position: absolute;
-        top: 0;
         border-radius: 100%;
         padding: var(--ww-spacing-01);
         transition: opacity 0.2s ease;
         z-index: 11;
         cursor: pointer;
-        background-color: var(--ww-editor-color);
+        background-color: var(--ww-container-color);
         color: white;
         justify-content: center;
         align-items: center;
+        left: 0;
+        top: var(--ww-container-menu-offset);
+        transform: translate(-50%, -50%);
+        transition: transform 0.3s ease;
+        // width: var(--ww-container-menu-size);
+        // height: var(--ww-container-menu-size);
 
-        &:after {
-            content: '';
+        &:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+
+        // &:after {
+        //     content: '';
+        //     position: absolute;
+        //     top: 50%;
+        //     left: 50%;
+        //     transform: translate(-50%, -50%) rotate(45deg);
+        //     width: 30px;
+        //     height: 30px;
+        // }
+    }
+
+    &.editing:hover {
+        & > .border {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(45deg);
-            width: 30px;
-            height: 30px;
-        }
-
-        &.right {
-            right: 0;
-            transform: translate(50%, -50%);
-        }
-        &.left {
+            top: 0;
             left: 0;
-            transform: translate(-50%, -50%);
+            right: 0;
+            bottom: 0;
+            border: 1px solid var(--ww-container-color);
+            pointer-events: none;
+            z-index: 10;
+        }
+        > .ww-container__menu {
+            opacity: 1;
+            pointer-events: all;
         }
     }
 }
