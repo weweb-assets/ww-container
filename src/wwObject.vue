@@ -374,7 +374,7 @@ export default {
                 left: 0;
                 right: 0;
                 bottom: 0;
-                border: 1px solid var(--ww-container-color);
+                border: 1px dashed var(--ww-container-color);
                 pointer-events: none;
                 z-index: 10;
             }
