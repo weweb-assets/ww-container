@@ -169,6 +169,62 @@ export default {
         },
         /* wwEditor:end */
     },
+    watch: {
+        /* wwEditor:start */
+        'content.wwObjects': {
+            handler(objects, oldObjects) {
+                if (!oldObjects) return;
+                objects = objects || [];
+                if (!oldObjects) return;
+                if (objects.length === oldObjects.length) return;
+                if (objects.length === 0) {
+                    this.$emit('update', { grid: [] });
+                    return;
+                }
+                this.equalize();
+            },
+        },
+        'content.lengthInUnit': {
+            handler() {
+                this.equalize();
+            },
+        },
+        'content.type': {
+            handler() {
+                if (this.content.type === 'grid') {
+                    this.equalize();
+                }
+            },
+        },
+        'content.behavior': {
+            handler() {
+                if (this.content.behavior === 'fit') {
+                    this.equalize();
+                }
+                if (this.content.behavior === 'wrap') {
+                    const grid = this.content.grid.map(val => Math.min(val, this.content.lengthInUnit));
+
+                    this.$emit('update', { grid });
+                }
+            },
+        },
+        screenSize: {
+            handler() {
+                this.equalize();
+            },
+        },
+        isDraging(isDraging) {
+            // By preventing event on the iframe, we ensure that all event will be on Manager, and not capture by the iframe
+            // Previous solution was double listners (both iframe and manager), but i think this is cleaner
+            const iframe = wwLib.getManagerWindow().document.querySelector('.ww-manager-iframe');
+            if (isDraging) {
+                iframe.classList.add('ww-stop-event');
+            } else {
+                iframe.classList.remove('ww-stop-event');
+            }
+        },
+        /* wwEditor:end */
+    },
     methods: {
         getItemStyle(index) {
             if (this.content.direction === 'column') {
@@ -240,10 +296,22 @@ export default {
             //flex -> total != length
             let lengthInUnit = this.content.lengthInUnit;
 
-            //Set lenght unit to at list wwObject length if fit mode
-            if (this.content.behavior === 'fit' && lengthInUnit < this.content.wwObjects.length) {
-                this.$emit('update', { lengthInUnit: this.content.wwObjects.length });
-                lengthInUnit = this.content.wwObjects.length;
+            console.log('LALA');
+
+            if (this.content.direction === 'row') {
+                let totalGrid = this.content.grid.reduce((total, col) => total + col, 0);
+
+                //Set lenght unit to at list wwObject length if fit mode
+                if (this.content.behavior === 'fit' && lengthInUnit < this.content.wwObjects.length) {
+                    this.$emit('update', { lengthInUnit: this.content.wwObjects.length });
+                    lengthInUnit = this.content.wwObjects.length;
+                }
+                if (this.content.behavior === 'fit' && totalGrid != lengthInUnit) {
+                    const itemLength = Math.floor(lengthInUnit / this.content.wwObjects.length);
+                    const firstItemLength = lengthInUnit - (this.content.wwObjects.length - 1) * itemLength;
+                    const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
+                    this.$emit('update', { grid });
+                }
             }
 
             //Grid length not same as wwObject length
@@ -252,62 +320,6 @@ export default {
                 const firstItemLength = lengthInUnit - (this.content.wwObjects.length - 1) * itemLength;
                 const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
                 this.$emit('update', { grid });
-            }
-        },
-        /* wwEditor:end */
-    },
-    watch: {
-        /* wwEditor:start */
-        'content.wwObjects': {
-            handler(objects, oldObjects) {
-                if (!oldObjects) return;
-                objects = objects || [];
-                if (!oldObjects) return;
-                if (objects.length === oldObjects.length) return;
-                if (objects.length === 0) {
-                    this.$emit('update', { grid: [] });
-                    return;
-                }
-                this.equalize();
-            },
-        },
-        'content.lengthInUnit': {
-            handler() {
-                this.equalize();
-            },
-        },
-        'content.type': {
-            handler() {
-                if (this.content.type === 'grid') {
-                    this.equalize();
-                }
-            },
-        },
-        'content.behavior': {
-            handler() {
-                if (this.content.behavior === 'fit') {
-                    this.equalize();
-                }
-                if (this.content.behavior === 'wrap') {
-                    const grid = this.content.grid.map(val => Math.min(val, this.content.lengthInUnit));
-
-                    this.$emit('update', { grid });
-                }
-            },
-        },
-        screenSize: {
-            handler() {
-                this.equalize();
-            },
-        },
-        isDraging(isDraging) {
-            // By preventing event on the iframe, we ensure that all event will be on Manager, and not capture by the iframe
-            // Previous solution was double listners (both iframe and manager), but i think this is cleaner
-            const iframe = wwLib.getManagerWindow().document.querySelector('.ww-manager-iframe');
-            if (isDraging) {
-                iframe.classList.add('ww-stop-event');
-            } else {
-                iframe.classList.remove('ww-stop-event');
             }
         },
         /* wwEditor:end */
