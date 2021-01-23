@@ -1,5 +1,5 @@
 <template>
-    <div class="ww-container" :class="[level % 2 === 0 ? 'blue' : 'green', { editing: isEditing }]">
+    <div class="ww-container" :class="[level % 2 === 0 ? 'blue' : 'green', { editing: isEditing, empty: isEmpty }]">
         <wwLayout
             class="ww-container__layout"
             :class="content.direction"
@@ -54,8 +54,8 @@
                         <div v-if="isDraging" class="ww-container__units">
                             {{ content.grid ? `${content.grid[index]}${content.lengthInUnit === 100 ? '%' : ''}` : 0 }}
                         </div>
+                        <div class="ww-container__border"></div>
                     </template>
-                    <div class="border"></div>
                     <!-- wwManager:end -->
                 </wwLayoutItem>
             </template>
@@ -64,6 +64,10 @@
         <div class="ww-container__menu" :style="{ '--ww-container-menu-offset': menuSize }">
             <wwEditorIcon small name="config"></wwEditorIcon>
         </div>
+        <div class="ww-container__border"></div>
+        <!-- <div class="ww-container__plus" @click="addWwObject()">
+            <wwEditorIcon small name="add"></wwEditorIcon>
+        </div> -->
         <!-- wwManager:end -->
     </div>
 </template>
@@ -72,7 +76,6 @@
 import { getRowConfiguration, getColumnConfiguration } from './configuration';
 
 export default {
-    name: '__COMPONENT_NAME__',
     wwDefaultContent: {
         wwObjects: [],
         grid: wwLib.responsive([]),
@@ -112,6 +115,12 @@ export default {
         isEditing() {
             /* wwEditor:start */
             return this.wwEditorState.editMode === wwLib.wwEditorHelper.EDIT_MODES.EDITION;
+            /* wwEditor:end */
+            return false;
+        },
+        isEmpty() {
+            /* wwEditor:start */
+            return !this.content || !this.content.wwObjects || !this.content.wwObjects.length;
             /* wwEditor:end */
             return false;
         },
@@ -290,13 +299,10 @@ export default {
             this.$emit('update', { grid });
         },
         equalize() {
-            //fit -> total = length
-            //wrap -> total != length
-            //scroll -> total != length
-            //flex -> total != length
+            if (this.isEmpty) {
+                return;
+            }
             let lengthInUnit = this.content.lengthInUnit;
-
-            console.log('LALA');
 
             if (this.content.direction === 'row') {
                 let totalGrid = this.content.grid.reduce((total, col) => total + col, 0);
@@ -322,7 +328,13 @@ export default {
                 this.$emit('update', { grid });
             }
         },
+        // addWwObject() {
+        //     wwLib.wwPopupSidebars.open({ firstPage: 'ELEMENTS' });
+        // },
         /* wwEditor:end */
+    },
+    mounted() {
+        this.equalize();
     },
 };
 </script>
@@ -331,12 +343,36 @@ export default {
 .ww-container {
     position: relative;
     box-sizing: border-box;
+    --ww-container-color: var(--ww-color-blue-400);
 
-    &.blue {
-        --ww-container-color: var(--ww-color-green-400);
+    &__plus {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: none;
+        z-index: 10;
+        padding: var(--ww-spacing-01);
+        transform: translate(-50%, -50%);
+        background: var(--ww-color-blue-500);
+        color: white;
+        border-radius: 100%;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        &:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
     }
-    &.green {
-        --ww-container-color: var(--ww-color-blue-500);
+    &__border {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: none;
+        pointer-events: none;
+        z-index: 10;
     }
 
     &__layout {
@@ -368,15 +404,9 @@ export default {
             > .ww-container__handle {
                 display: flex;
             }
-            & > .border {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
+            & > .ww-container__border {
                 border: 1px dashed var(--ww-container-color);
-                pointer-events: none;
-                z-index: 10;
+                display: block;
             }
         }
     }
@@ -415,7 +445,7 @@ export default {
         color: white;
         font-size: 1.8rem;
         padding: var(--ww-spacing-02);
-        z-index: 3;
+        z-index: 11;
     }
     &__menu {
         opacity: 0;
@@ -453,20 +483,26 @@ export default {
         // }
     }
 
-    &.editing:hover {
-        & > .border {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border: 1px solid var(--ww-container-color);
-            pointer-events: none;
-            z-index: 10;
+    &.editing {
+        &:hover {
+            & > .ww-container__border {
+                border: 1px solid var(--ww-container-color);
+                display: block;
+            }
+            > .ww-container__menu {
+                opacity: 1;
+                pointer-events: all;
+            }
         }
-        > .ww-container__menu {
-            opacity: 1;
-            pointer-events: all;
+
+        &.empty {
+            & > .ww-container__border {
+                border: 1px dashed var(--ww-color-dark-500);
+                display: block;
+            }
+            & > .ww-container__plus {
+                display: flex;
+            }
         }
     }
 }
