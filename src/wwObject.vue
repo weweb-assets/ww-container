@@ -334,7 +334,9 @@ export default {
         /* wwEditor:end */
     },
     mounted() {
+        /* wwEditor:start */
         this.equalize();
+        /* wwEditor:end */
     },
 };
 </script>
