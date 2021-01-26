@@ -237,7 +237,9 @@ export default {
     methods: {
         getItemStyle(index) {
             if (this.content.direction === 'column') {
-                return {};
+                return {
+                    width: 'unset',
+                };
             }
             let base;
             if (this.content.alignItems === 'stretch') {
@@ -250,7 +252,7 @@ export default {
                 };
             }
             if (this.content.type === 'flex') {
-                return { ...base, minWidth: '40px' };
+                return { ...base, minWidth: '40px', width: 'unset' };
             }
             const widthInUnit = this.content.grid ? this.content.grid[index] : 0;
             return {
@@ -303,6 +305,7 @@ export default {
                 return;
             }
             let lengthInUnit = this.content.lengthInUnit;
+            console.log('equalize');
 
             if (this.content.direction === 'row') {
                 let totalGrid = this.content.grid.reduce((total, col) => total + col, 0);
