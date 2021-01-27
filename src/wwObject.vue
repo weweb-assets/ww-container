@@ -339,6 +339,9 @@ export default {
             while (gridDisplay.length < this.content.wwObjects.length) {
                 gridDisplay.push(true);
             }
+            while (gridDisplay.length > this.content.wwObjects.length) {
+                gridDisplay.pop();
+            }
             const wwObjectCount = gridDisplay.filter(value => value !== false).length;
 
             if (this.content.direction === 'row') {
@@ -362,6 +365,7 @@ export default {
                 const itemLength = Math.floor(lengthInUnit / wwObjectCount);
                 const firstItemLength = lengthInUnit - (wwObjectCount - 1) * itemLength;
                 const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
+
                 this.$emit('update', { grid });
             }
 
