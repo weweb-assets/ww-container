@@ -104,8 +104,8 @@ const PUSH_LAST = {
     },
 };
 
-function getGrid(disabled, lengthInUnit) {
-    return {
+function getGridAndDisplay(disabled, content) {
+    const gridAndDisplay = {
         lengthInUnitRadio: {
             path: 'lengthInUnit',
             label: { en: 'Grid system', fr: 'Grille' },
@@ -118,7 +118,7 @@ function getGrid(disabled, lengthInUnit) {
                 disabled,
             },
         },
-        ...(lengthInUnit === 100
+        ...(content.lengthInUnit === 100
             ? null
             : {
                   lengthInUnit: {
@@ -130,6 +130,21 @@ function getGrid(disabled, lengthInUnit) {
                   },
               }),
     };
+
+    gridAndDisplay[`grid-display`] = {
+        path: 'gridDisplay',
+        isArray: true,
+        label: { en: `Show Col. IDX`, fr: `Aff. Col. IDX` },
+        type: 'TextRadioGroup',
+        options: {
+            choices: [
+                { value: true, label: 'Yes' },
+                { value: false, label: 'No' },
+            ],
+        },
+    };
+
+    return gridAndDisplay;
 }
 
 export function getRowConfiguration(content) {
@@ -144,7 +159,7 @@ export function getRowConfiguration(content) {
                 : null),
             ...(content.type === 'flex' ? { pushLast: PUSH_LAST } : null),
         },
-        settingsOptions: getGrid(content.type === 'flex', content.lengthInUnit),
+        settingsOptions: getGridAndDisplay(content.type === 'flex', content),
     };
 }
 
@@ -158,6 +173,6 @@ export function getColumnConfiguration(content) {
             },
             pushLast: PUSH_LAST,
         },
-        settingsOptions: getGrid(true, content.lengthInUnit),
+        settingsOptions: getGridAndDisplay(true, content),
     };
 }

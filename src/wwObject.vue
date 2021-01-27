@@ -65,9 +65,6 @@
             <wwEditorIcon small name="config"></wwEditorIcon>
         </div>
         <div class="ww-container__border"></div>
-        <!-- <div class="ww-container__plus" @click="addWwObject()">
-            <wwEditorIcon small name="add"></wwEditorIcon>
-        </div> -->
         <!-- wwManager:end -->
     </div>
 </template>
@@ -79,6 +76,7 @@ export default {
     wwDefaultContent: {
         wwObjects: [],
         grid: wwLib.responsive([]),
+        gridDisplay: wwLib.responsive([]),
         direction: wwLib.responsive('row'),
         reverse: wwLib.responsive(false),
         lengthInUnit: wwLib.responsive(100),
@@ -182,38 +180,53 @@ export default {
         /* wwEditor:start */
         'content.wwObjects': {
             handler(objects, oldObjects) {
-                if (!oldObjects) return;
-                objects = objects || [];
-                if (!oldObjects) return;
-                if (objects.length === oldObjects.length) return;
-                if (objects.length === 0) {
-                    this.$emit('update', { grid: [] });
-                    return;
+                if (!_.isEqual(objects, oldObjects)) {
+                    if (!oldObjects) return;
+                    objects = objects || [];
+                    if (!oldObjects) return;
+                    if (objects.length === oldObjects.length) return;
+                    if (objects.length === 0) {
+                        this.$emit('update', { grid: [] });
+                        return;
+                    }
+                    this.equalize();
                 }
-                this.equalize();
             },
         },
         'content.lengthInUnit': {
-            handler() {
-                this.equalize();
+            handler(oldVal, newVal) {
+                if (!_.isEqual(oldVal, newVal)) {
+                    this.equalize();
+                }
             },
         },
         'content.type': {
-            handler() {
-                if (this.content.type === 'grid') {
-                    this.equalize();
+            handler(oldVal, newVal) {
+                if (!_.isEqual(oldVal, newVal)) {
+                    if (this.content.type === 'grid') {
+                        this.equalize();
+                    }
                 }
             },
         },
         'content.behavior': {
-            handler() {
-                if (this.content.behavior === 'fit') {
-                    this.equalize();
-                }
-                if (this.content.behavior === 'wrap') {
-                    const grid = this.content.grid.map(val => Math.min(val, this.content.lengthInUnit));
+            handler(oldVal, newVal) {
+                if (!_.isEqual(oldVal, newVal)) {
+                    if (this.content.behavior === 'fit') {
+                        this.equalize();
+                    }
+                    if (this.content.behavior === 'wrap') {
+                        const grid = this.content.grid.map(val => Math.min(val, this.content.lengthInUnit));
 
-                    this.$emit('update', { grid });
+                        this.$emit('update', { grid });
+                    }
+                }
+            },
+        },
+        'content.gridDisplay': {
+            handler(oldVal, newVal) {
+                if (!_.isEqual(oldVal, newVal)) {
+                    this.equalize();
                 }
             },
         },
@@ -236,30 +249,45 @@ export default {
     },
     methods: {
         getItemStyle(index) {
-            if (this.content.direction === 'column') {
-                return {
-                    width: 'unset',
-                };
-            }
-            let base;
-            if (this.content.alignItems === 'stretch') {
-                base = {};
-            } else {
-                base = {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: this.content.alignItems,
-                };
-            }
-            if (this.content.type === 'flex') {
-                return { ...base, minWidth: '40px', width: 'unset' };
-            }
-            const widthInUnit = this.content.grid ? this.content.grid[index] : 0;
-            return {
-                ...base,
-                width: `calc(${widthInUnit} * 100% / ${this.content.lengthInUnit})`,
-                flexShrink: '0',
+            const style = {
+                display: 'block',
+                width: 'unset',
+                flexDirection: '',
+                justifyContent: 'unset',
+                minWidth: 'unset',
+                flexShrink: 'unset',
             };
+
+            //wwObject Hidden
+            if (this.content.gridDisplay && this.content.gridDisplay[index] === false) {
+                style.display = 'none';
+                return style;
+            }
+
+            //Column
+            if (this.content.direction === 'column') {
+                return style;
+            }
+
+            //Stretch
+            if (this.content.alignItems !== 'stretch') {
+                style.display = 'flex';
+                style.flexDirection = 'column';
+                style.justifyContent = this.content.alignItems;
+            }
+
+            //Flex
+            if (this.content.type === 'flex') {
+                style.minWidth = '40px';
+                style.width = 'unset';
+                return style;
+            }
+
+            const widthInUnit = this.content.grid ? this.content.grid[index] : 0;
+            style.width = `calc(${widthInUnit} * 100% / ${this.content.lengthInUnit})`;
+            style.flexShrink = '0';
+
+            return style;
         },
         /* wwEditor:start */
         add(index) {
@@ -305,35 +333,40 @@ export default {
                 return;
             }
             let lengthInUnit = this.content.lengthInUnit;
-            console.log('equalize');
+
+            const gridDisplay = this.content.gridDisplay || this.content.wwObjects.map(() => true);
+            const wwObjectCount = gridDisplay.filter(value => value !== false).length;
+            console.log(wwObjectCount);
 
             if (this.content.direction === 'row') {
                 let totalGrid = this.content.grid.reduce((total, col) => total + col, 0);
 
                 //Set lenght unit to at list wwObject length if fit mode
-                if (this.content.behavior === 'fit' && lengthInUnit < this.content.wwObjects.length) {
-                    this.$emit('update', { lengthInUnit: this.content.wwObjects.length });
-                    lengthInUnit = this.content.wwObjects.length;
+                if (this.content.behavior === 'fit' && lengthInUnit < wwObjectCount) {
+                    this.$emit('update', { lengthInUnit: wwObjectCount });
+                    lengthInUnit = wwObjectCount;
                 }
                 if (this.content.behavior === 'fit' && totalGrid != lengthInUnit) {
-                    const itemLength = Math.floor(lengthInUnit / this.content.wwObjects.length);
-                    const firstItemLength = lengthInUnit - (this.content.wwObjects.length - 1) * itemLength;
+                    const itemLength = Math.floor(lengthInUnit / wwObjectCount);
+                    const firstItemLength = lengthInUnit - (wwObjectCount - 1) * itemLength;
                     const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
                     this.$emit('update', { grid });
                 }
             }
 
             //Grid length not same as wwObject length
-            if (this.content.grid.length != this.content.wwObjects.length) {
-                const itemLength = Math.floor(lengthInUnit / this.content.wwObjects.length);
-                const firstItemLength = lengthInUnit - (this.content.wwObjects.length - 1) * itemLength;
+            if (this.content.grid.length != wwObjectCount) {
+                const itemLength = Math.floor(lengthInUnit / wwObjectCount);
+                const firstItemLength = lengthInUnit - (wwObjectCount - 1) * itemLength;
                 const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
                 this.$emit('update', { grid });
             }
+
+            if (!this.content.gridDisplay || this.content.gridDisplay.length < wwObjectCount) {
+                const gridDisplay = this.content.wwObjects.map((_, i) => true);
+                this.$emit('update', { gridDisplay });
+            }
         },
-        // addWwObject() {
-        //     wwLib.wwPopupSidebars.open({ firstPage: 'ELEMENTS' });
-        // },
         /* wwEditor:end */
     },
     mounted() {
@@ -349,36 +382,6 @@ export default {
     position: relative;
     box-sizing: border-box;
     --ww-container-color: var(--ww-color-blue-400);
-
-    &__plus {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: none;
-        z-index: 10;
-        padding: var(--ww-spacing-01);
-        transform: translate(-50%, -50%);
-        background: var(--ww-color-blue-500);
-        color: white;
-        border-radius: 100%;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        &:hover {
-            transform: translate(-50%, -50%) scale(1.1);
-        }
-    }
-    &__border {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: none;
-        pointer-events: none;
-        z-index: 10;
-    }
 
     &__layout {
         display: flex;
@@ -401,6 +404,8 @@ export default {
     &__item {
         position: relative;
         box-sizing: border-box;
+
+        /* wwEditor:start */
         .ww-container__handle {
             display: none;
         }
@@ -414,6 +419,54 @@ export default {
                 display: block;
             }
         }
+        /* wwEditor:end */
+    }
+
+    /* wwEditor:start */
+    &__border {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: none;
+        pointer-events: none;
+        z-index: 10;
+    }
+    &__menu {
+        opacity: 0;
+        pointer-events: none;
+        display: flex;
+        position: absolute;
+        border-radius: 100%;
+        padding: var(--ww-spacing-01);
+        transition: opacity 0.2s ease;
+        z-index: 11;
+        cursor: pointer;
+        background-color: var(--ww-container-color);
+        color: white;
+        justify-content: center;
+        align-items: center;
+        left: 0;
+        top: var(--ww-container-menu-offset);
+        transform: translate(-50%, -50%);
+        transition: transform 0.3s ease;
+        // width: var(--ww-container-menu-size);
+        // height: var(--ww-container-menu-size);
+
+        &:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+
+        // &:after {
+        //     content: '';
+        //     position: absolute;
+        //     top: 50%;
+        //     left: 50%;
+        //     transform: translate(-50%, -50%) rotate(45deg);
+        //     width: 30px;
+        //     height: 30px;
+        // }
     }
     &__handle {
         position: absolute;
@@ -452,41 +505,6 @@ export default {
         padding: var(--ww-spacing-02);
         z-index: 11;
     }
-    &__menu {
-        opacity: 0;
-        pointer-events: none;
-        display: flex;
-        position: absolute;
-        border-radius: 100%;
-        padding: var(--ww-spacing-01);
-        transition: opacity 0.2s ease;
-        z-index: 11;
-        cursor: pointer;
-        background-color: var(--ww-container-color);
-        color: white;
-        justify-content: center;
-        align-items: center;
-        left: 0;
-        top: var(--ww-container-menu-offset);
-        transform: translate(-50%, -50%);
-        transition: transform 0.3s ease;
-        // width: var(--ww-container-menu-size);
-        // height: var(--ww-container-menu-size);
-
-        &:hover {
-            transform: translate(-50%, -50%) scale(1.3);
-        }
-
-        // &:after {
-        //     content: '';
-        //     position: absolute;
-        //     top: 50%;
-        //     left: 50%;
-        //     transform: translate(-50%, -50%) rotate(45deg);
-        //     width: 30px;
-        //     height: 30px;
-        // }
-    }
 
     &.editing {
         &:hover {
@@ -510,5 +528,6 @@ export default {
             }
         }
     }
+    /* wwEditor:end */
 }
 </style>
