@@ -97,6 +97,7 @@ export default {
     },
     inject: {
         parentLevel: { from: 'level', default: 0 },
+        objectId: { from: 'objectId' },
     },
     provide() {
         return {
@@ -335,8 +336,10 @@ export default {
             let lengthInUnit = this.content.lengthInUnit;
 
             const gridDisplay = this.content.gridDisplay || this.content.wwObjects.map(() => true);
+            while (gridDisplay.length < this.content.wwObjects.length) {
+                gridDisplay.push(true);
+            }
             const wwObjectCount = gridDisplay.filter(value => value !== false).length;
-            console.log(wwObjectCount);
 
             if (this.content.direction === 'row') {
                 let totalGrid = this.content.grid.reduce((total, col) => total + col, 0);
