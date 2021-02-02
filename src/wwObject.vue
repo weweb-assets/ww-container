@@ -333,9 +333,13 @@ export default {
             if (this.isEmpty) {
                 return;
             }
+
             let lengthInUnit = this.content.lengthInUnit;
 
-            const gridDisplay = this.content.gridDisplay || this.content.wwObjects.map(() => true);
+            let gridDisplay = [...this.content.gridDisplay];
+            if (!gridDisplay.length) {
+                gridDisplay = this.content.wwObjects.map(() => true);
+            }
             while (gridDisplay.length < this.content.wwObjects.length) {
                 gridDisplay.push(true);
             }
@@ -345,7 +349,7 @@ export default {
             const wwObjectCount = gridDisplay.filter(value => value !== false).length;
 
             if (this.content.direction === 'row') {
-                let totalGrid = this.content.grid.reduce((total, col) => total + col, 0);
+                let totalGrid = this.content.grid.reduce((total, col, i) => total + (gridDisplay[i] ? col : 0), 0);
 
                 //Set lenght unit to at list wwObject length if fit mode
                 if (this.content.behavior === 'fit' && lengthInUnit < wwObjectCount) {
@@ -361,7 +365,7 @@ export default {
             }
 
             //Grid length not same as wwObject length
-            if (this.content.grid.length != wwObjectCount) {
+            if (this.content.grid.length != this.content.wwObjects.length) {
                 const itemLength = Math.floor(lengthInUnit / wwObjectCount);
                 const firstItemLength = lengthInUnit - (wwObjectCount - 1) * itemLength;
                 const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
@@ -371,6 +375,7 @@ export default {
 
             if (!this.content.gridDisplay || this.content.gridDisplay.length < wwObjectCount) {
                 const gridDisplay = this.content.wwObjects.map((_, i) => true);
+
                 this.$emit('update', { gridDisplay });
             }
         },
