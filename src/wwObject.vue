@@ -6,6 +6,7 @@
             :style="layoutStyle"
             ww-responsive="ww-layout"
             :direction="content.direction"
+            :type="content.type"
             :placeholderIndex="mustPushLast ? -1 : null"
             path="wwObjects"
             ref="layout"
@@ -279,8 +280,15 @@ export default {
 
             //Flex
             if (this.content.type === 'flex') {
+                const wwObject = this.$store.getters['websiteData/getWwObject'](this.content.wwObjects[index].uid);
+
+                style.width = wwLib.getResponsiveStyleProp({
+                    store: this.$store,
+                    style: (wwObject._state || {}).style || {},
+                    prop: 'width',
+                });
+
                 style.minWidth = '40px';
-                style.width = 'unset';
                 return style;
             }
 
