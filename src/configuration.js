@@ -70,6 +70,15 @@ const VERTICAL_ALIGNEMENT_COLUMN = {
         ],
     },
 };
+
+const COLUMN_GAP = {
+    label: { en: 'Column Gap', fr: 'Esp. Col.' },
+    type: 'Length',
+    options: {
+        unitChoices: [{ value: 'px', label: 'px', min: 0, max: 50 }],
+    },
+};
+
 const TYPE = {
     label: { en: 'Arrangement', fr: 'Arrangement' },
     type: 'TextSelect',
@@ -158,6 +167,7 @@ export function getRowConfiguration(content) {
                 ? { justifyContent: HORIZONTAL_ALIGN_ROW }
                 : null),
             ...(content.type === 'flex' ? { pushLast: PUSH_LAST } : null),
+            // ...(content.type === 'flex' ? { columnGap: COLUMN_GAP } : null),
         },
         settingsOptions: getGridAndDisplay(content.type === 'flex', content),
     };
