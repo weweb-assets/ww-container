@@ -590,7 +590,6 @@ export default {
 
         &.empty {
             & > .ww-container__border {
-                border: 1px dashed var(--ww-color-dark-500);
                 display: block;
             }
             & > .ww-container__plus {
