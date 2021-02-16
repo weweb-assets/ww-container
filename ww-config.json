@@ -17,7 +17,7 @@
             ]
         },
         "otherOptions": {
-            "data": {
+            "wwObjects": {
                 "bindable": "repeatable",
                 "label": {
                     "en": "Content data",

@@ -20,7 +20,7 @@
                             draging: dragingIndex === index,
                         },
                     ]"
-                    :style="getItemStyle(index)"
+                    :style="getItemStyle(item, index)"
                     :ww-responsive="`index-${index}`"
                     ref="layoutItem"
                 >
@@ -260,7 +260,7 @@ export default {
         /* wwEditor:end */
     },
     methods: {
-        getItemStyle(index) {
+        getItemStyle(item, index) {
             const style = {
                 display: 'block',
                 width: 'unset',
@@ -290,7 +290,7 @@ export default {
 
             //Flex
             if (this.content.type === 'flex') {
-                const wwObject = this.$store.getters['websiteData/getWwObject'](this.content.wwObjects[index].uid);
+                const wwObject = this.$store.getters['websiteData/getWwObject'](item.uid);
 
                 const width = wwLib.getResponsiveStyleProp({
                     store: this.$store,
