@@ -376,6 +376,10 @@ export default {
                 gridDisplay.pop();
             }
 
+            if (gridDisplay.length !== this.content.gridDisplay.length) {
+                this.$emit('update', { gridDisplay });
+            }
+
             const visibleWwObjectCount = gridDisplay.filter(value => value !== false).length;
 
             if (this.content.direction === 'row') {
