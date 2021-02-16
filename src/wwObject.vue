@@ -141,7 +141,7 @@ export default {
             const style = {};
 
             //DIRECTION
-            style.flexDirection = `${this.content.direction}${this.content.reverse ? '-reverse' : ''}`;
+            style.flexDirection = `${this.content.direction}`;
 
             style.width = 'unset';
             style.flexWrap = 'unset';
@@ -301,6 +301,13 @@ export default {
 
                 style.minWidth = '40px';
                 return style;
+            }
+
+            //Reverse
+            if (this.content.reverse) {
+                style.order = this.content.wwObjects.length - 1 - index;
+            } else {
+                style.order = index;
             }
 
             const widthInUnit = this.content.grid ? this.content.grid[index] : 0;
