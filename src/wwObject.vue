@@ -8,6 +8,7 @@
             :direction="content.direction"
             :type="content.type"
             :placeholderIndex="mustPushLast ? -1 : null"
+            :max="content.maxItem"
             path="wwObjects"
             ref="layout"
         >
@@ -124,6 +125,9 @@ export default {
             return !this.content || !this.content.wwObjects || !this.content.wwObjects.length;
             /* wwEditor:end */
             return false;
+        },
+        isBinded() {
+            return this.wwEditorState.bindedProps.wwObjects;
         },
         screenSize() {
             return this.$store.getters['front/getScreenSize'];

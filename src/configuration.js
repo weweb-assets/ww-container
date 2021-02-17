@@ -113,6 +113,16 @@ const PUSH_LAST = {
     },
 };
 
+const MAX_ITEM = {
+    label: { en: 'Number of items max', fr: 'Nombre maximal' },
+    type: 'Number',
+    options: {
+        nullable: true,
+        min: 1,
+        max: 100,
+    },
+};
+
 function getGridAndDisplay(disabled, content) {
     const gridAndDisplay = {
         lengthInUnitRadio: {
@@ -140,10 +150,10 @@ function getGridAndDisplay(disabled, content) {
               }),
     };
 
-    gridAndDisplay[`grid-display`] = {
+    gridAndDisplay['grid-display'] = {
         path: 'gridDisplay',
         isArray: true,
-        label: { en: `Show Col. IDX`, fr: `Aff. Col. IDX` },
+        label: { en: 'Show Col. IDX', fr: 'Aff. Col. IDX' },
         type: 'TextRadioGroup',
         options: {
             choices: [
@@ -169,7 +179,10 @@ export function getRowConfiguration(content) {
             ...(content.type === 'flex' ? { pushLast: PUSH_LAST } : null),
             // ...(content.type === 'flex' ? { columnGap: COLUMN_GAP } : null),
         },
-        settingsOptions: getGridAndDisplay(content.type === 'flex', content),
+        settingsOptions: {
+            ...getGridAndDisplay(content.type === 'flex', content),
+            maxItem: MAX_ITEM,
+        },
     };
 }
 
@@ -183,6 +196,9 @@ export function getColumnConfiguration(content) {
             },
             pushLast: PUSH_LAST,
         },
-        settingsOptions: getGridAndDisplay(true, content),
+        settingsOptions: {
+            ...getGridAndDisplay(true, content),
+            maxItem: MAX_ITEM,
+        },
     };
 }
