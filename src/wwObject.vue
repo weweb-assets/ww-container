@@ -270,6 +270,13 @@ export default {
                 flexShrink: 'unset',
             };
 
+            //Reverse
+            if (this.content.reverse) {
+                style.order = this.content.wwObjects.length - 1 - index;
+            } else {
+                style.order = index;
+            }
+
             //wwObject Hidden
             if (this.content.gridDisplay && this.content.gridDisplay[index] === false) {
                 style.display = 'none';
@@ -301,13 +308,6 @@ export default {
 
                 style.minWidth = '40px';
                 return style;
-            }
-
-            //Reverse
-            if (this.content.reverse) {
-                style.order = this.content.wwObjects.length - 1 - index;
-            } else {
-                style.order = index;
             }
 
             const widthInUnit = this.content.grid ? this.content.grid[index] : 0;
