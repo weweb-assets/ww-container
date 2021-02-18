@@ -332,7 +332,7 @@ export default {
         },
         getGridAt(index) {
             if (!this.content.grid) return 0;
-            if (index > this.content.grid.length) {
+            if (index >= this.content.grid.length) {
                 return this.content.grid[0] || 0;
             } else {
                 return this.content.grid[index];
