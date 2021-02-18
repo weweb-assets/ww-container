@@ -36,7 +36,7 @@
                     <!-- wwManager:start -->
                     <template v-if="isEditing && content.direction === 'row' && content.type === 'grid'">
                         <wwDraggable
-                            v-if="content.behavior === 'fit' && index > 0"
+                            v-if="behavior === 'fit' && index > 0"
                             class="ww-container__handle start"
                             :class="{ active: isDraging }"
                             data-is-ui
@@ -45,7 +45,7 @@
                             @endDrag="endDrag($event)"
                         />
                         <wwDraggable
-                            v-if="content.behavior !== 'fit' || index < content.wwObjects.length - 1"
+                            v-if="behavior !== 'fit' || index < content.wwObjects.length - 1"
                             class="ww-container__handle end"
                             :class="{ active: isDraging }"
                             data-is-ui
@@ -54,7 +54,11 @@
                             @endDrag="endDrag($event)"
                         />
                         <div v-if="isDraging" class="ww-container__units">
-                            {{ content.grid ? `${content.grid[index]}${content.lengthInUnit === 100 ? '%' : ''}` : 0 }}
+                            {{
+                                content.grid
+                                    ? `${content.grid[isBinded ? 0 : index]}${content.lengthInUnit === 100 ? '%' : ''}`
+                                    : 0
+                            }}
                         </div>
                         <div class="ww-container__border"></div>
                     </template>
@@ -160,10 +164,10 @@ export default {
                 style.flexWrap = 'wrap';
                 style.justifyContent = this.content.justifyContent;
                 style.columnGap = this.content.columnGap;
-            } else if (this.content.behavior === 'wrap') {
+            } else if (this.behavior === 'wrap') {
                 style.flexWrap = 'wrap';
                 style.justifyContent = this.content.justifyContent;
-            } else if (this.content.behavior === 'scroll') {
+            } else if (this.behavior === 'scroll') {
                 style.overflowX = 'auto';
                 style.width = '100%';
             }
@@ -178,6 +182,16 @@ export default {
         },
         mustPushLast() {
             return (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
+        },
+        // TODO: not good
+        behavior() {
+            /* wwEditor:start */
+            if (this.isBinded && this.content.behavior === 'fit') {
+                return 'wrap';
+            }
+            /* wwEditor:end */
+
+            return this.content.behavior;
         },
         /* wwEditor:start */
         menuSize() {
@@ -240,6 +254,13 @@ export default {
             },
         },
         'content.grid': {
+            handler(oldVal, newVal) {
+                if (!_.isEqual(oldVal, newVal) && !this.isBinded) {
+                    this.equalize();
+                }
+            },
+        },
+        isBinded: {
             handler(oldVal, newVal) {
                 if (!_.isEqual(oldVal, newVal)) {
                     this.equalize();
@@ -307,7 +328,7 @@ export default {
                 return style;
             }
 
-            const widthInUnit = this.content.grid ? this.content.grid[index] : 0;
+            const widthInUnit = this.content.grid ? this.content.grid[this.isBinded ? 0 : index] : 0;
             style.width = `calc(${widthInUnit} * 100% / ${this.content.lengthInUnit})`;
             style.flexShrink = '0';
 
@@ -334,18 +355,18 @@ export default {
             }
             let newGridValue = Math.max(
                 1,
-                this.initialGrid[this.dragingIndex] + Math.round(totalDeltaX / this.unitLengthInPx)
+                this.initialGrid[this.isBinded ? 0 : this.dragingIndex] + Math.round(totalDeltaX / this.unitLengthInPx)
             );
-            if (this.content.behavior === 'fit') {
+            if (this.behavior === 'fit') {
                 const fromIndex = this.dragingHandle === 'start' ? this.dragingIndex - 1 : this.dragingIndex + 1;
                 const sum = this.initialGrid[fromIndex] + this.initialGrid[this.dragingIndex];
                 newGridValue = Math.min(newGridValue, sum - 1);
                 this.setGridValue({ [this.dragingIndex]: newGridValue, [fromIndex]: sum - newGridValue });
             } else {
-                if (this.content.behavior === 'wrap') {
+                if (this.behavior === 'wrap') {
                     newGridValue = Math.min(newGridValue, this.content.lengthInUnit);
                 }
-                this.setGridValue({ [this.dragingIndex]: newGridValue });
+                this.setGridValue({ [this.isBinded ? 0 : this.dragingIndex]: newGridValue });
             }
         },
         setGridValue(update) {
@@ -356,8 +377,12 @@ export default {
             if (this.isEmpty) {
                 return;
             }
-
             clearTimeout(this.updateGridTimeout);
+
+            if (this.isBinded) {
+                this.$emit('update', { grid: [this.content.lengthInUnit] });
+                return;
+            }
 
             let lengthInUnit = this.content.lengthInUnit;
 
@@ -379,13 +404,13 @@ export default {
                 let totalGrid = this.content.grid.reduce((total, col, i) => total + (gridDisplay[i] ? col : 0), 0);
 
                 //Set lenght unit to at list wwObject length if fit mode
-                if (this.content.behavior === 'fit' && lengthInUnit < visibleWwObjectCount) {
+                if (this.behavior === 'fit' && lengthInUnit < visibleWwObjectCount) {
                     this.$emit('update', { lengthInUnit: visibleWwObjectCount });
                     lengthInUnit = visibleWwObjectCount;
                 }
 
                 if (
-                    this.content.behavior === 'fit' &&
+                    this.behavior === 'fit' &&
                     (totalGrid != lengthInUnit || this.content.grid.length !== this.content.wwObjects.length)
                 ) {
                     const itemLength = Math.floor(lengthInUnit / visibleWwObjectCount);
