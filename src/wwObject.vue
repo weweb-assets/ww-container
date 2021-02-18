@@ -54,11 +54,7 @@
                             @endDrag="endDrag($event)"
                         />
                         <div v-if="isDraging" class="ww-container__units">
-                            {{
-                                content.grid
-                                    ? `${content.grid[isBinded ? 0 : index]}${content.lengthInUnit === 100 ? '%' : ''}`
-                                    : 0
-                            }}
+                            {{ `${getGridAt(index)}${content.lengthInUnit === 100 ? '%' : ''}` }}
                         </div>
                         <div class="ww-container__border"></div>
                     </template>
@@ -328,11 +324,19 @@ export default {
                 return style;
             }
 
-            const widthInUnit = this.content.grid ? this.content.grid[this.isBinded ? 0 : index] : 0;
+            const widthInUnit = this.getGridAt(index);
             style.width = `calc(${widthInUnit} * 100% / ${this.content.lengthInUnit})`;
             style.flexShrink = '0';
 
             return style;
+        },
+        getGridAt(index) {
+            if (!this.content.grid) return 0;
+            if (index > this.content.grid.index) {
+                return this.content.grid[0] || 0;
+            } else {
+                return this.content.grid[index];
+            }
         },
         /* wwEditor:start */
         add(index) {
