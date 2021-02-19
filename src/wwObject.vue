@@ -213,9 +213,12 @@ export default {
             },
         },
         'content.lengthInUnit': {
-            handler(oldVal, newVal) {
-                if (!_.isEqual(oldVal, newVal)) {
+            handler(newVal, oldVal) {
+                if (!_.isEqual(newVal, oldVal)) {
                     this.equalize();
+                    if (this.isBinded) {
+                        this.$emit('update', { grid: [newVal] });
+                    }
                 }
             },
         },
@@ -384,7 +387,6 @@ export default {
             clearTimeout(this.updateGridTimeout);
 
             if (this.isBinded) {
-                this.$emit('update', { grid: [this.content.lengthInUnit] });
                 return;
             }
 
