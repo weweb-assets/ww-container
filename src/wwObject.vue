@@ -36,7 +36,7 @@
                     <!-- wwManager:start -->
                     <template v-if="isEditing && content.direction === 'row' && content.type === 'grid'">
                         <wwDraggable
-                            v-if="behavior === 'fit' && index > 0"
+                            v-if="content.behavior === 'fit' && index > 0"
                             class="ww-container__handle start"
                             :class="{ active: isDraging }"
                             data-is-ui
@@ -45,7 +45,7 @@
                             @endDrag="endDrag($event)"
                         />
                         <wwDraggable
-                            v-if="behavior !== 'fit' || index < content.wwObjects.length - 1"
+                            v-if="content.behavior !== 'fit' || index < content.wwObjects.length - 1"
                             class="ww-container__handle end"
                             :class="{ active: isDraging }"
                             data-is-ui
@@ -89,8 +89,10 @@ export default {
         alignItems: wwLib.responsive('start'),
         pushLast: wwLib.responsive(false),
     },
-    wwEditorConfiguration({ content }) {
-        return content.direction === 'row' ? getRowConfiguration(content) : getColumnConfiguration(content);
+    wwEditorConfiguration({ content, bindedProps }) {
+        return content.direction === 'row'
+            ? getRowConfiguration(content, bindedProps)
+            : getColumnConfiguration(content, bindedProps);
     },
     props: {
         content: Object,
@@ -160,10 +162,10 @@ export default {
                 style.flexWrap = 'wrap';
                 style.justifyContent = this.content.justifyContent;
                 style.columnGap = this.content.columnGap;
-            } else if (this.behavior === 'wrap') {
+            } else if (this.content.behavior === 'wrap') {
                 style.flexWrap = 'wrap';
                 style.justifyContent = this.content.justifyContent;
-            } else if (this.behavior === 'scroll') {
+            } else if (this.content.behavior === 'scroll') {
                 style.overflowX = 'auto';
                 style.width = '100%';
             }
@@ -178,16 +180,6 @@ export default {
         },
         mustPushLast() {
             return (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
-        },
-        // TODO: not good
-        behavior() {
-            /* wwEditor:start */
-            if (this.isBinded && this.content.behavior === 'fit') {
-                return 'wrap';
-            }
-            /* wwEditor:end */
-
-            return this.content.behavior;
         },
         /* wwEditor:start */
         menuSize() {
@@ -260,8 +252,11 @@ export default {
             },
         },
         isBinded: {
-            handler(oldVal, newVal) {
-                if (!_.isEqual(oldVal, newVal)) {
+            handler(newVal, oldVal) {
+                if (!_.isEqual(newVal, oldVal)) {
+                    if (newVal && this.content.behavior === 'fit') {
+                        this.$emit('update', { behavior: 'wrap', gridDisplay: [] });
+                    }
                     this.equalize();
                 }
             },
@@ -364,13 +359,13 @@ export default {
                 1,
                 this.initialGrid[this.isBinded ? 0 : this.dragingIndex] + Math.round(totalDeltaX / this.unitLengthInPx)
             );
-            if (this.behavior === 'fit') {
+            if (this.content.behavior === 'fit') {
                 const fromIndex = this.dragingHandle === 'start' ? this.dragingIndex - 1 : this.dragingIndex + 1;
                 const sum = this.initialGrid[fromIndex] + this.initialGrid[this.dragingIndex];
                 newGridValue = Math.min(newGridValue, sum - 1);
                 this.setGridValue({ [this.dragingIndex]: newGridValue, [fromIndex]: sum - newGridValue });
             } else {
-                if (this.behavior === 'wrap') {
+                if (this.content.behavior === 'wrap') {
                     newGridValue = Math.min(newGridValue, this.content.lengthInUnit);
                 }
                 this.setGridValue({ [this.isBinded ? 0 : this.dragingIndex]: newGridValue });
@@ -410,13 +405,13 @@ export default {
                 let totalGrid = this.content.grid.reduce((total, col, i) => total + (gridDisplay[i] ? col : 0), 0);
 
                 //Set lenght unit to at list wwObject length if fit mode
-                if (this.behavior === 'fit' && lengthInUnit < visibleWwObjectCount) {
+                if (this.content.behavior === 'fit' && lengthInUnit < visibleWwObjectCount) {
                     this.$emit('update', { lengthInUnit: visibleWwObjectCount });
                     lengthInUnit = visibleWwObjectCount;
                 }
 
                 if (
-                    this.behavior === 'fit' &&
+                    this.content.behavior === 'fit' &&
                     (totalGrid != lengthInUnit || this.content.grid.length !== this.content.wwObjects.length)
                 ) {
                     const itemLength = Math.floor(lengthInUnit / visibleWwObjectCount);
