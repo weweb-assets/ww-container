@@ -200,6 +200,9 @@ export default {
                         this.$emit('update', { grid: [] });
                         return;
                     }
+                    if (this.isBinded && objects.length >= 1 && oldObjects.length === 0) {
+                        this.$emit('update', { grid: [this.content.lengthInUnit] });
+                    }
                     this.equalize();
                 }
             },
