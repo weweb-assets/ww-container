@@ -162,7 +162,7 @@ export default {
             const style = {};
 
             //DIRECTION
-            style.flexDirection = `${this.content.direction}${this.content.reverse ? '-reverse' : ''}`;
+            style.flexDirection = `${this.content.direction}`;
 
             style.width = 'unset';
             style.flexWrap = 'unset';
@@ -298,6 +298,13 @@ export default {
                 minWidth: 'unset',
                 flexShrink: 'unset',
             };
+
+            //Reverse
+            if (this.content.reverse) {
+                style.order = this.content.wwObjects.length - 1 - index;
+            } else {
+                style.order = index;
+            }
 
             //wwObject Hidden
             if (this.content.gridDisplay && this.content.gridDisplay[index] === false) {
@@ -661,7 +668,6 @@ export default {
 
         &.empty {
             & > .ww-container__border {
-                border: 1px dashed var(--ww-color-dark-500);
                 display: block;
             }
             & > .ww-container__plus {
