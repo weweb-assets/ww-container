@@ -411,8 +411,6 @@ export default {
             }
             let lengthInUnit = this.content.lengthInUnit;
 
-            console.log('Equalize');
-
             if (this.isBinded) {
                 const grid = { ...this.content.grid };
                 grid[this.content.wwObjects[0].uid] = grid[this.content.wwObjects[0].uid] || lengthInUnit;
@@ -464,7 +462,6 @@ export default {
                             grid[this.content.wwObjects[index].uid] = `${index}` === '0' ? firstItemLength : itemLength;
                         }
                     }
-                    console.log(_.cloneDeep(this.content.grid || {}), grid);
 
                     //Check need for update
                     const isEqual = false; //_.isEqual(grid, this.content.grid);
@@ -474,7 +471,6 @@ export default {
                         if (!isEqual) {
                             update.grid = grid;
                         }
-                        console.log('lalal?', update);
                         this.$emit('update', update);
                     }
 
