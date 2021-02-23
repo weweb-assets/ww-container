@@ -144,7 +144,10 @@ export default {
             return false;
         },
         isBinded() {
+            /* wwEditor:start */
             return this.wwEditorState.bindedProps && this.wwEditorState.bindedProps.wwObjects;
+            /* wwEditor:end */
+            return false;
         },
         screenSize() {
             return this.$store.getters['front/getScreenSize'];
