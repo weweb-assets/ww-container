@@ -381,6 +381,7 @@ export default {
             if (this.isEmpty || this.isBinded) {
                 return;
             }
+
             // clearTimeout(this.updateGridTimeout);
 
             let lengthInUnit = this.content.lengthInUnit;
@@ -417,6 +418,10 @@ export default {
                     const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
                     this.$emit('update', { grid });
 
+                    return;
+                }
+
+                if (this.content.type === 'flex') {
                     return;
                 }
 
