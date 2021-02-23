@@ -88,6 +88,7 @@ export default {
         justifyContent: wwLib.responsive('center'),
         alignItems: wwLib.responsive('start'),
         pushLast: wwLib.responsive(false),
+        maxItem: wwLib.responsive(50),
     },
     wwEditorConfiguration({ content, bindedProps }) {
         return content.direction === 'row'
