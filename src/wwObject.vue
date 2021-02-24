@@ -329,7 +329,7 @@ export default {
 
             //Flex
             if (this.content.type === 'flex') {
-                const wwObject = wwLib.wwObjectHelper.getWwObject(item.uid);
+                const wwObject = this.$store.getters['websiteData/getWwObject'](item.uid);
 
                 const width = wwLib.getResponsiveStyleProp({
                     store: this.$store,
