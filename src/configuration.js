@@ -90,17 +90,19 @@ const TYPE = {
     },
 };
 
-const BEHAVIOR = {
-    label: { en: 'Line breaks (wrap)', fr: 'Line breaks (wrap)' },
-    type: 'TextSelect',
-    options: {
-        options: [
-            { value: 'fit', label: { en: 'Fit onto one line', fr: 'Sur une ligne' } },
-            { value: 'wrap', label: { en: 'Wrap onto multiple lines', fr: 'A la ligne' } },
-            { value: 'scroll', label: { en: 'Scroll onto one line', fr: 'Scroll sur une ligne' } },
-        ],
-    },
-};
+function getBehavior(isBinded) {
+    return {
+        label: { en: 'Line breaks (wrap)', fr: 'Line breaks (wrap)' },
+        type: 'TextSelect',
+        options: {
+            options: [
+                ...(isBinded ? [] : [{ value: 'fit', label: { en: 'Fit onto one line', fr: 'Sur une ligne' } }]),
+                { value: 'wrap', label: { en: 'Wrap onto multiple lines', fr: 'A la ligne' } },
+                { value: 'scroll', label: { en: 'Scroll onto one line', fr: 'Scroll sur une ligne' } },
+            ],
+        },
+    };
+}
 
 const PUSH_LAST = {
     label: { en: 'Push last to the end', fr: 'Push last to the end' },
@@ -113,7 +115,17 @@ const PUSH_LAST = {
     },
 };
 
-function getGridAndDisplay(disabled, content) {
+const MAX_ITEM = {
+    label: { en: 'Number of items max', fr: 'Nombre maximal' },
+    type: 'Number',
+    options: {
+        nullable: true,
+        min: 1,
+        max: 100,
+    },
+};
+
+function getGridAndDisplay(disabled, content, isBinded) {
     const gridAndDisplay = {
         lengthInUnitRadio: {
             path: 'lengthInUnit',
@@ -140,28 +152,31 @@ function getGridAndDisplay(disabled, content) {
               }),
     };
 
-    gridAndDisplay[`grid-display`] = {
-        path: 'gridDisplay',
-        isArray: true,
-        label: { en: `Show Col. IDX`, fr: `Aff. Col. IDX` },
-        type: 'TextRadioGroup',
-        options: {
-            choices: [
-                { value: true, label: 'Yes' },
-                { value: false, label: 'No' },
-            ],
-        },
-    };
+    if (!isBinded) {
+        gridAndDisplay['grid-display'] = {
+            path: 'gridDisplay',
+            isArray: true,
+            label: { en: 'Show Col. IDX', fr: 'Aff. Col. IDX' },
+            type: 'TextRadioGroup',
+            options: {
+                choices: [
+                    { value: true, label: 'Yes' },
+                    { value: false, label: 'No' },
+                ],
+            },
+        };
+    }
 
     return gridAndDisplay;
 }
 
-export function getRowConfiguration(content) {
+export function getRowConfiguration(content, bindedProps) {
+    const isBinded = bindedProps.wwObjects;
     return {
         styleOptions: {
             ...COMMON_STYLE,
             type: TYPE,
-            ...(content.type === 'grid' ? { behavior: BEHAVIOR } : null),
+            ...(content.type === 'grid' ? { behavior: getBehavior(isBinded) } : null),
             alignItems: VERTICAL_ALIGN_ROW,
             ...(content.type === 'flex' || content.behavior === 'wrap'
                 ? { justifyContent: HORIZONTAL_ALIGN_ROW }
@@ -169,11 +184,15 @@ export function getRowConfiguration(content) {
             ...(content.type === 'flex' ? { pushLast: PUSH_LAST } : null),
             // ...(content.type === 'flex' ? { columnGap: COLUMN_GAP } : null),
         },
-        settingsOptions: getGridAndDisplay(content.type === 'flex', content),
+        settingsOptions: {
+            ...getGridAndDisplay(content.type === 'flex', content, isBinded),
+            maxItem: MAX_ITEM,
+        },
     };
 }
 
-export function getColumnConfiguration(content) {
+export function getColumnConfiguration(content, bindedProps) {
+    const isBinded = bindedProps.wwObjects;
     return {
         styleOptions: {
             ...COMMON_STYLE,
@@ -183,6 +202,9 @@ export function getColumnConfiguration(content) {
             },
             pushLast: PUSH_LAST,
         },
-        settingsOptions: getGridAndDisplay(true, content),
+        settingsOptions: {
+            ...getGridAndDisplay(true, content, isBinded),
+            maxItem: MAX_ITEM,
+        },
     };
 }

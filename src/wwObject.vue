@@ -8,6 +8,7 @@
             :direction="content.direction"
             :type="content.type"
             :placeholderIndex="mustPushLast ? -1 : null"
+            :max="content.maxItem"
             path="wwObjects"
             ref="layout"
         >
@@ -18,9 +19,10 @@
                         {
                             editing: isEditing,
                             draging: dragingIndex === index,
+                            'show-length': showLength,
                         },
                     ]"
-                    :style="getItemStyle(index)"
+                    :style="getItemStyle(item, index)"
                     :ww-responsive="`index-${index}`"
                     ref="layoutItem"
                 >
@@ -42,6 +44,8 @@
                             @startDrag="startDrag($event, index, 'start')"
                             @drag="drag($event)"
                             @endDrag="endDrag($event)"
+                            @mouseenter.native="isHover = true"
+                            @mouseleave.native="isHover = false"
                         />
                         <wwDraggable
                             v-if="content.behavior !== 'fit' || index < content.wwObjects.length - 1"
@@ -51,9 +55,11 @@
                             @startDrag="startDrag($event, index, 'end')"
                             @drag="drag($event)"
                             @endDrag="endDrag($event)"
+                            @mouseenter.native="isHover = true"
+                            @mouseleave.native="isHover = false"
                         />
-                        <div v-if="isDraging" class="ww-container__units">
-                            {{ content.grid ? `${content.grid[index]}${content.lengthInUnit === 100 ? '%' : ''}` : 0 }}
+                        <div v-if="showLength" class="ww-container__units">
+                            {{ `${getGridAt(index)}${content.lengthInUnit === 100 ? '%' : ''}` }}
                         </div>
                         <div class="ww-container__border"></div>
                     </template>
@@ -62,7 +68,12 @@
             </template>
         </wwLayout>
         <!-- wwManager:start -->
-        <div class="ww-container__menu" :style="{ '--ww-container-menu-offset': menuSize }">
+        <div
+            class="ww-container__menu"
+            :style="{ '--ww-container-menu-offset': menuSize }"
+            @mouseenter="isHover = true"
+            @mouseleave="isHover = false"
+        >
             <wwEditorIcon small name="config"></wwEditorIcon>
         </div>
         <div class="ww-container__border"></div>
@@ -76,7 +87,7 @@ import { getRowConfiguration, getColumnConfiguration } from './configuration';
 export default {
     wwDefaultContent: {
         wwObjects: [],
-        grid: wwLib.responsive([]),
+        grid: wwLib.responsive({}),
         gridDisplay: wwLib.responsive([]),
         direction: wwLib.responsive('row'),
         reverse: wwLib.responsive(false),
@@ -87,9 +98,12 @@ export default {
         justifyContent: wwLib.responsive('center'),
         alignItems: wwLib.responsive('start'),
         pushLast: wwLib.responsive(false),
+        maxItem: wwLib.responsive(50),
     },
-    wwEditorConfiguration({ content }) {
-        return content.direction === 'row' ? getRowConfiguration(content) : getColumnConfiguration(content);
+    wwEditorConfiguration({ content, bindedProps }) {
+        return content.direction === 'row'
+            ? getRowConfiguration(content, bindedProps)
+            : getColumnConfiguration(content, bindedProps);
     },
     props: {
         content: Object,
@@ -110,6 +124,10 @@ export default {
         return {
             dragingHandle: 'start',
             dragingIndex: -1,
+
+            /* wwEditor:start */
+            isHover: false,
+            /* wwEditor:end */
         };
     },
     computed: {
@@ -125,17 +143,23 @@ export default {
             /* wwEditor:end */
             return false;
         },
+        isBinded() {
+            /* wwEditor:start */
+            return this.wwEditorState.bindedProps && this.wwEditorState.bindedProps.wwObjects;
+            /* wwEditor:end */
+            return false;
+        },
         screenSize() {
             return this.$store.getters['front/getScreenSize'];
-        },
-        isSelected() {
-            return this.wwEditorState.isSelected;
         },
         level() {
             return this.parentLevel + 1;
         },
         isDraging() {
             return this.dragingIndex >= 0;
+        },
+        showLength() {
+            return this.isDraging || this.isHover;
         },
         layoutStyle() {
             const style = {};
@@ -186,22 +210,20 @@ export default {
         'content.wwObjects': {
             handler(objects, oldObjects) {
                 if (!_.isEqual(objects, oldObjects)) {
-                    if (!oldObjects) return;
-                    objects = objects || [];
-                    if (!oldObjects) return;
-                    if (objects.length === oldObjects.length) return;
-                    if (objects.length === 0) {
-                        this.$emit('update', { grid: [] });
-                        return;
-                    }
+                    // if (this.isBinded && objects.length >= 1 && oldObjects.length === 0) {
+                    //     this.$emit('update', { grid: [this.content.lengthInUnit] });
+                    // }
                     this.equalize();
                 }
             },
         },
         'content.lengthInUnit': {
-            handler(oldVal, newVal) {
-                if (!_.isEqual(oldVal, newVal)) {
+            handler(newVal, oldVal) {
+                if (!_.isEqual(newVal, oldVal)) {
                     this.equalize();
+                    if (this.isBinded) {
+                        this.$emit('update', { grid: [newVal] });
+                    }
                 }
             },
         },
@@ -220,11 +242,11 @@ export default {
                     if (this.content.behavior === 'fit') {
                         this.equalize();
                     }
-                    if (this.content.behavior === 'wrap') {
-                        const grid = this.content.grid.map(val => Math.min(val, this.content.lengthInUnit));
+                    // if (this.content.behavior === 'wrap') {
+                    //     const grid = this.content.grid.map(val => Math.min(val, this.content.lengthInUnit));
 
-                        this.$emit('update', { grid });
-                    }
+                    //     this.$emit('update', { grid });
+                    // }
                 }
             },
         },
@@ -235,9 +257,19 @@ export default {
                 }
             },
         },
-        'content.grid': {
-            handler(oldVal, newVal) {
-                if (!_.isEqual(oldVal, newVal)) {
+        // 'content.grid': {
+        //     handler(oldVal, newVal) {
+        //         if (!_.isEqual(oldVal, newVal) && !this.isBinded) {
+        //             this.equalize();
+        //         }
+        //     },
+        // },
+        isBinded: {
+            handler(newVal, oldVal) {
+                if (!_.isEqual(newVal, oldVal)) {
+                    if (newVal && this.content.behavior === 'fit') {
+                        this.$emit('update', { behavior: 'wrap', gridDisplay: [] });
+                    }
                     this.equalize();
                 }
             },
@@ -260,7 +292,7 @@ export default {
         /* wwEditor:end */
     },
     methods: {
-        getItemStyle(index) {
+        getItemStyle(item, index) {
             const style = {
                 display: 'block',
                 width: 'unset',
@@ -297,7 +329,7 @@ export default {
 
             //Flex
             if (this.content.type === 'flex') {
-                const wwObject = this.$store.getters['websiteData/getWwObject'](this.content.wwObjects[index].uid);
+                const wwObject = this.$store.getters['websiteData/getWwObject'](item.uid);
 
                 const width = wwLib.getResponsiveStyleProp({
                     store: this.$store,
@@ -309,12 +341,31 @@ export default {
                 style.minWidth = '40px';
                 return style;
             }
-
-            const widthInUnit = this.content.grid ? this.content.grid[index] : 0;
+            const widthInUnit = this.getGridAt(index);
             style.width = `calc(${widthInUnit} * 100% / ${this.content.lengthInUnit})`;
             style.flexShrink = '0';
 
             return style;
+        },
+        getGridAt(index, grid) {
+            index = this.isBinded ? 0 : index;
+            grid = grid || this.content.grid;
+            if (!grid) return 0;
+
+            if (Array.isArray(grid)) {
+                //LEGACY
+                if (index >= grid.length) {
+                    return grid[0] || 0;
+                } else {
+                    return grid[index];
+                }
+            } else {
+                if (index >= this.content.wwObjects.length) {
+                    return 0;
+                } else {
+                    return grid[this.content.wwObjects[index].uid];
+                }
+            }
         },
         /* wwEditor:start */
         add(index) {
@@ -325,7 +376,7 @@ export default {
             this.dragingHandle = handle;
             const { width } = this.$el.getBoundingClientRect();
             this.unitLengthInPx = width / this.content.lengthInUnit;
-            this.initialGrid = [...this.content.grid];
+            this.initialGrid = { ...this.content.grid };
         },
         endDrag() {
             this.dragingIndex = -1;
@@ -337,32 +388,45 @@ export default {
             }
             let newGridValue = Math.max(
                 1,
-                this.initialGrid[this.dragingIndex] + Math.round(totalDeltaX / this.unitLengthInPx)
+                this.getGridAt(this.isBinded ? 0 : this.dragingIndex, this.initialGrid) +
+                    Math.round(totalDeltaX / this.unitLengthInPx)
             );
             if (this.content.behavior === 'fit') {
                 const fromIndex = this.dragingHandle === 'start' ? this.dragingIndex - 1 : this.dragingIndex + 1;
-                const sum = this.initialGrid[fromIndex] + this.initialGrid[this.dragingIndex];
+                const sum =
+                    this.getGridAt(fromIndex, this.initialGrid) + this.getGridAt(this.dragingIndex, this.initialGrid);
                 newGridValue = Math.min(newGridValue, sum - 1);
-                this.setGridValue({ [this.dragingIndex]: newGridValue, [fromIndex]: sum - newGridValue });
+                this.setGridValue({
+                    [this.content.wwObjects[this.dragingIndex].uid]: newGridValue,
+                    [this.content.wwObjects[fromIndex].uid]: sum - newGridValue,
+                });
             } else {
                 if (this.content.behavior === 'wrap') {
                     newGridValue = Math.min(newGridValue, this.content.lengthInUnit);
                 }
-                this.setGridValue({ [this.dragingIndex]: newGridValue });
+                this.setGridValue({
+                    [this.content.wwObjects[this.isBinded ? 0 : this.dragingIndex].uid]: newGridValue,
+                });
             }
         },
         setGridValue(update) {
-            const grid = this.content.grid.map((val, i) => update[i] || val);
-            this.$emit('update', { grid });
+            const grid = { ...this.content.grid, ...update };
+            if (!_.isEqual(grid, this.content.grid)) {
+                this.$emit('update', { grid });
+            }
         },
         equalize() {
             if (this.isEmpty) {
                 return;
             }
-
-            clearTimeout(this.updateGridTimeout);
-
             let lengthInUnit = this.content.lengthInUnit;
+
+            if (this.isBinded) {
+                const grid = { ...this.content.grid };
+                grid[this.content.wwObjects[0].uid] = grid[this.content.wwObjects[0].uid] || lengthInUnit;
+                this.$emit('update', { grid });
+                return;
+            }
 
             //Set gridDisplay
             let gridDisplay = [...this.content.gridDisplay];
@@ -376,83 +440,88 @@ export default {
                 gridDisplay.pop();
             }
 
-            if (gridDisplay.length !== this.content.gridDisplay.length) {
-                this.$emit('update', { gridDisplay });
+            let grid = _.cloneDeep(this.content.grid || {});
+
+            for (const wwObject of this.content.wwObjects) {
+                if (!grid[wwObject.uid]) {
+                    grid[wwObject.uid] = this.getGridAt(0) || lengthInUnit;
+                }
             }
 
-            const visibleWwObjectCount = gridDisplay.filter(value => value !== false).length;
-
             if (this.content.direction === 'row') {
-                let totalGrid = this.content.grid.reduce((total, col, i) => total + (gridDisplay[i] ? col : 0), 0);
+                if (this.content.behavior === 'fit') {
+                    //Check if lengthInUnit is enouth
+                    let newLengthInUnit = null;
+                    const visibleWwObjectCount = gridDisplay.filter(value => value !== false).length;
+                    if (lengthInUnit < visibleWwObjectCount) {
+                        newLengthInUnit = visibleWwObjectCount;
+                        lengthInUnit = visibleWwObjectCount;
+                    }
 
-                //Set lenght unit to at list wwObject length if fit mode
-                if (this.content.behavior === 'fit' && lengthInUnit < visibleWwObjectCount) {
-                    this.$emit('update', { lengthInUnit: visibleWwObjectCount });
-                    lengthInUnit = visibleWwObjectCount;
-                }
+                    //Check if total fits
+                    let totalGrid = gridDisplay.reduce(
+                        (total, display, i) => total + (display ? this.getGridAt(i, grid) : 0),
+                        0
+                    );
 
-                if (
-                    this.content.behavior === 'fit' &&
-                    (totalGrid != lengthInUnit || this.content.grid.length !== this.content.wwObjects.length)
-                ) {
-                    const itemLength = Math.floor(lengthInUnit / visibleWwObjectCount);
-                    const firstItemLength = lengthInUnit - (visibleWwObjectCount - 1) * itemLength;
-                    const grid = this.content.wwObjects.map((_, i) => (i === 0 ? firstItemLength : itemLength));
-                    this.updateGridTimeout = setTimeout(() => this.$emit('update', { grid }), 1);
+                    if (totalGrid != lengthInUnit) {
+                        grid = {};
+                        const itemLength = Math.floor(lengthInUnit / visibleWwObjectCount);
+                        const firstItemLength = lengthInUnit - (visibleWwObjectCount - 1) * itemLength;
+                        for (const index in this.content.wwObjects) {
+                            grid[this.content.wwObjects[index].uid] = `${index}` === '0' ? firstItemLength : itemLength;
+                        }
+                    }
+
+                    //Check need for update
+                    const isEqual = false; //_.isEqual(grid, this.content.grid);
+                    if (newLengthInUnit || !isEqual) {
+                        const update = {};
+                        if (newLengthInUnit) update.lengthInUnit = newLengthInUnit;
+                        if (!isEqual) {
+                            update.grid = grid;
+                        }
+                        this.$emit('update', update);
+                    }
 
                     return;
                 }
 
-                let grid = [...this.content.grid];
-                while (grid.length < this.content.wwObjects.length) {
-                    for (const index in this.content.wwObjects) {
-                        if (this.wwObjectGridSizes[this.content.wwObjects[index].uid] === undefined) {
-                            let previousWwObjectIndex = index > 0 ? index - 1 : index + 1;
-                            previousWwObjectIndex =
-                                previousWwObjectIndex > grid.length - 1 ? -1 : previousWwObjectIndex;
-
-                            if (previousWwObjectIndex > -1) {
-                                grid.splice(index, 0, grid[previousWwObjectIndex]);
-                            } else {
-                                grid.splice(index, 0, lengthInUnit);
-                            }
-                        }
-                    }
+                if (this.content.type === 'flex') {
+                    return;
                 }
 
-                while (grid.length > this.content.wwObjects.length) {
-                    const wwObjectGridSizesArray = Object.keys(this.wwObjectGridSizes);
-                    for (const index in wwObjectGridSizesArray) {
-                        let wwObjectExists = false;
-                        for (const wwObject of this.content.wwObjects) {
-                            if (wwObject.uid === wwObjectGridSizesArray[index]) wwObjectExists = true;
-                        }
-                        if (!wwObjectExists) {
-                            grid.splice(index, 1);
-                        }
+                for (const index in this.content.wwObjects) {
+                    if (!this.getGridAt(index, grid)) {
+                        grid[this.content.wwObjects[index].uid] =
+                            this.getGridAt(index - 1, grid) || this.getGridAt(0, grid);
                     }
+                    grid[this.content.wwObjects[index].uid] = Math.min(
+                        grid[this.content.wwObjects[index].uid],
+                        lengthInUnit
+                    );
                 }
 
-                if (!_.isEqual(grid.length, this.content.grid.length)) {
-                    this.updateGridTimeout = setTimeout(() => this.$emit('update', { grid }), 1);
-                    this.setWwObjectGridSizes();
+                if (!_.isEqual(grid, this.content.grid)) {
+                    this.$emit('update', { grid });
                 }
             }
         },
-        setWwObjectGridSizes() {
-            this.wwObjectGridSizes = [];
-            for (const index in this.content.wwObjects) {
-                let size = this.content.grid.length > index ? this.content.grid[index] : 1;
-
-                this.wwObjectGridSizes.push({ [this.content.wwObjects[index].uid]: size });
+        transformGrid() {
+            if (Array.isArray(this.content.grid)) {
+                const grid = {};
+                for (const index in this.content.wwObjects) {
+                    grid[this.content.wwObjects[index].uid] = this.content.grid[index] || 0;
+                }
+                this.$emit('update', { grid });
             }
         },
         /* wwEditor:end */
     },
     mounted() {
         /* wwEditor:start */
-        this.setWwObjectGridSizes();
-        this.equalize();
+        this.transformGrid();
+        this.$nextTick(this.equalize);
         /* wwEditor:end */
     },
 };
@@ -491,7 +560,8 @@ export default {
             display: none;
         }
         &.editing:hover,
-        &.editing.draging {
+        &.editing.draging,
+        &.editing.show-length {
             > .ww-container__handle {
                 display: flex;
             }

@@ -15,6 +15,15 @@
                     "icon": "background"
                 }
             ]
+        },
+        "otherOptions": {
+            "wwObjects": {
+                "bindable": "repeatable",
+                "label": {
+                    "en": "Content data",
+                    "fr": "Données"
+                }
+            }
         }
     }
 }
