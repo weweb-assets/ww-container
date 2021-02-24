@@ -363,7 +363,7 @@ export default {
                 if (index >= this.content.wwObjects.length) {
                     return 0;
                 } else {
-                    return grid[this.content.wwObjects[index].uid];
+                    return grid[this.content.wwObjects[index].uid.split('_')[0]];
                 }
             }
         },
