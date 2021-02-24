@@ -275,8 +275,10 @@ export default {
             },
         },
         screenSize: {
-            handler() {
-                this.equalize();
+            handler(newScreenSize, oldScreenSize) {
+                if (!_.isEqual(newScreenSize, oldScreenSize)) {
+                    this.equalize();
+                }
             },
         },
         isDraging(isDraging) {
@@ -423,8 +425,9 @@ export default {
 
             if (this.isBinded) {
                 const grid = { ...this.content.grid };
-                grid[this.content.wwObjects[0].uid] = grid[this.content.wwObjects[0].uid] || lengthInUnit;
-                this.$emit('update', { grid });
+                if (!grid[this.content.wwObjects[0].uid] || grid[this.content.wwObjects[0].uid] > lengthInUnit) {
+                    grid[this.content.wwObjects[0].uid] = grid[this.content.wwObjects[0].uid] || lengthInUnit;
+                }
                 return;
             }
 
