@@ -76,7 +76,7 @@
         >
             <wwEditorIcon small name="config"></wwEditorIcon>
         </div>
-        <div class="ww-container__border"></div>
+        <div class="ww-container__border" :class="{ '-binded': isBinded }"></div>
         <!-- wwManager:end -->
     </div>
 </template>
