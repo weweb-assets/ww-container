@@ -61,7 +61,7 @@
                         <div v-if="showLength" class="ww-container__units">
                             {{ `${getGridAt(index)}${content.lengthInUnit === 100 ? '%' : ''}` }}
                         </div>
-                        <div class="ww-container__border"></div>
+                        <div class="ww-container__border" :class="{ '-binded': isBinded }"></div>
                     </template>
                     <!-- wwManager:end -->
                 </wwLayoutItem>
@@ -570,6 +570,9 @@ export default {
             }
             & > .ww-container__border {
                 border: 1px dashed var(--ww-container-color);
+                &.-binded {
+                    border-color: var(--ww-color-purple-500);
+                }
                 display: block;
             }
         }
@@ -664,6 +667,9 @@ export default {
         &:hover {
             & > .ww-container__border {
                 border: 1px solid var(--ww-container-color);
+                &.-binded {
+                    border-color: var(--ww-color-purple-500);
+                }
                 display: block;
             }
             > .ww-container__menu {
