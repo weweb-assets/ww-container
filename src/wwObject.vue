@@ -11,6 +11,7 @@
             :max="content.maxItem"
             path="wwObjects"
             ref="layout"
+            @update="update"
         >
             <template v-slot="{ layoutId, item, index }" class="ww-container__item">
                 <wwLayoutItem
@@ -87,7 +88,7 @@ import { getRowConfiguration, getColumnConfiguration } from './configuration';
 export default {
     wwDefaultContent: {
         wwObjects: [],
-        grid: wwLib.responsive({}),
+        grid: wwLib.responsive([]),
         gridDisplay: wwLib.responsive([]),
         direction: wwLib.responsive('row'),
         reverse: wwLib.responsive(false),
@@ -207,77 +208,14 @@ export default {
     },
     watch: {
         /* wwEditor:start */
-        'content.wwObjects': {
-            handler(objects, oldObjects) {
-                if (!_.isEqual(objects, oldObjects)) {
-                    // if (this.isBinded && objects.length >= 1 && oldObjects.length === 0) {
-                    //     this.$emit('update', { grid: [this.content.lengthInUnit] });
-                    // }
-                    this.equalize();
-                }
-            },
-        },
-        'content.lengthInUnit': {
-            handler(newVal, oldVal) {
-                if (!_.isEqual(newVal, oldVal)) {
-                    this.equalize();
-                    if (this.isBinded) {
-                        this.$emit('update', { grid: [newVal] });
-                    }
-                }
-            },
-        },
-        'content.type': {
-            handler(oldVal, newVal) {
-                if (!_.isEqual(oldVal, newVal)) {
-                    if (this.content.type === 'grid') {
-                        this.equalize();
-                    }
-                }
-            },
-        },
-        'content.behavior': {
-            handler(oldVal, newVal) {
-                if (!_.isEqual(oldVal, newVal)) {
-                    if (this.content.behavior === 'fit') {
-                        this.equalize();
-                    }
-                    // if (this.content.behavior === 'wrap') {
-                    //     const grid = this.content.grid.map(val => Math.min(val, this.content.lengthInUnit));
-
-                    //     this.$emit('update', { grid });
-                    // }
-                }
-            },
-        },
-        'content.gridDisplay': {
-            handler(oldVal, newVal) {
-                if (!_.isEqual(oldVal, newVal)) {
-                    this.equalize();
-                }
-            },
-        },
-        // 'content.grid': {
-        //     handler(oldVal, newVal) {
-        //         if (!_.isEqual(oldVal, newVal) && !this.isBinded) {
-        //             this.equalize();
-        //         }
-        //     },
-        // },
         isBinded: {
             handler(newVal, oldVal) {
                 if (!_.isEqual(newVal, oldVal)) {
-                    if (newVal && this.content.behavior === 'fit') {
-                        this.$emit('update', { behavior: 'wrap', gridDisplay: [] });
+                    if (newVal) {
+                        const gridDisplay = this.content.gridDisplay.map(_ => true);
+                        const behavior = this.content.behavior === 'fit' ? 'wrap' : this.content.behavior;
+                        this.$emit('update', { behavior, gridDisplay });
                     }
-                    this.equalize();
-                }
-            },
-        },
-        screenSize: {
-            handler(newScreenSize, oldScreenSize) {
-                if (!_.isEqual(newScreenSize, oldScreenSize)) {
-                    this.equalize();
                 }
             },
         },
@@ -289,6 +227,24 @@ export default {
                 iframe.classList.add('ww-stop-event');
             } else {
                 iframe.classList.remove('ww-stop-event');
+            }
+        },
+        content(newContent, oldContent) {
+            if (
+                newContent.lengthInUnit !== oldContent.lengthInUnit ||
+                newContent.behavior !== oldContent.behavior ||
+                newContent.type !== oldContent.type ||
+                !_.isEqual(newContent.grid, oldContent.grid) ||
+                !_.isEqual(newContent.gridDisplay, oldContent.gridDisplay)
+            ) {
+                if (this.objectId === '0f8bb863-08c8-413d-9902-a3f84cd55a52') debugger;
+                let grid = this.transformGrid();
+                if (this.content.behavior === 'fit') {
+                    grid = this.fit(this.content.wwObjects, this.content.grid, this.content.gridDisplay);
+                } else {
+                    grid = this.content.grid.map(item => Math.min(item, this.content.lengthInUnit));
+                }
+                if (!_.isEqual(grid, this.content.grid)) this.$emit('update', { grid });
             }
         },
         /* wwEditor:end */
@@ -355,19 +311,97 @@ export default {
             if (!grid) return 0;
 
             if (Array.isArray(grid)) {
-                //LEGACY
                 if (index >= grid.length) {
                     return grid[0] || 0;
                 } else {
                     return grid[index];
                 }
             } else {
+                //LEGACY
                 if (index >= this.content.wwObjects.length) {
                     return 0;
                 } else {
                     return grid[this.content.wwObjects[index].uid.split('_')[0]];
                 }
             }
+        },
+        update(event) {
+            /* wwEditor:start */
+            let gridDisplay = [...this.content.gridDisplay];
+
+            switch (event.type) {
+                case 'add':
+                    gridDisplay.splice(event.index, 0, true);
+                    break;
+                case 'remove':
+                    gridDisplay.splice(event.fromIndex, 1);
+                    break;
+                case 'move':
+                    gridDisplay = this.moveItem(gridDisplay, event.fromIndex, event.index);
+                    break;
+            }
+
+            gridDisplay = gridDisplay.slice(0, event.list.length);
+
+            if (this.content.direction === 'column') {
+                this.$emit('update', { gridDisplay });
+            } else {
+                const grid = this.getNewGrid(event, gridDisplay);
+
+                this.$emit('update', { grid, gridDisplay });
+            }
+            /* wwEditor:end */
+        },
+        getNewGrid(event, gridDisplay) {
+            let grid;
+            switch (event.type) {
+                case 'add':
+                    const index = Math.max(0, event.index - 1);
+                    grid = [...this.content.grid];
+                    grid.splice(event.index, 0, this.content.grid[index]);
+                    if (this.content.behavior === 'fit') {
+                        grid = this.fit(event.list, grid, gridDisplay);
+                    }
+                    break;
+                case 'remove':
+                    grid = [...this.content.grid];
+                    grid.splice(event.fromIndex, 1);
+                    if (this.content.behavior === 'fit') {
+                        grid = this.fit(event.list, grid, gridDisplay);
+                    }
+                    break;
+                case 'move':
+                    grid = this.moveItem(this.content.grid, event.fromIndex, event.index);
+                    break;
+            }
+
+            grid = grid.map(item => Math.min(item, this.content.lengthInUnit));
+
+            return grid;
+        },
+        moveItem(grid, fromIndex, toIndex) {
+            const list = [...grid];
+            const [item] = list.splice(fromIndex, 1);
+            if (fromIndex < toIndex) toIndex--;
+            list.splice(toIndex, 0, item);
+            return list;
+        },
+        fit(list, grid, gridDisplay) {
+            gridDisplay = list.map((_, index) => (gridDisplay[index] === false ? false : true));
+            let totalGrid = list.reduce((total, item, i) => total + (gridDisplay[i] ? grid[i] : 0), 0);
+            const lengthInUnit = this.content.lengthInUnit;
+            if (totalGrid === lengthInUnit && list.length === grid.length) return grid;
+
+            const visibleWwObjectCount = Math.max(1, gridDisplay.filter(value => value !== false).length);
+
+            const itemLength = Math.floor(lengthInUnit / visibleWwObjectCount);
+            const firstItemLength = lengthInUnit - (visibleWwObjectCount - 1) * itemLength;
+
+            const firstVisibleItemIndex = gridDisplay.findIndex(isVisible => isVisible);
+            return list.map((_, index) => {
+                if (!gridDisplay[index]) return itemLength;
+                return firstVisibleItemIndex === index ? firstItemLength : itemLength;
+            });
         },
         /* wwEditor:start */
         add(index) {
@@ -378,7 +412,7 @@ export default {
             this.dragingHandle = handle;
             const { width } = this.$el.getBoundingClientRect();
             this.unitLengthInPx = width / this.content.lengthInUnit;
-            this.initialGrid = { ...this.content.grid };
+            this.initialGrid = [...this.content.grid];
         },
         endDrag() {
             this.dragingIndex = -1;
@@ -399,125 +433,35 @@ export default {
                     this.getGridAt(fromIndex, this.initialGrid) + this.getGridAt(this.dragingIndex, this.initialGrid);
                 newGridValue = Math.min(newGridValue, sum - 1);
                 this.setGridValue({
-                    [this.content.wwObjects[this.dragingIndex].uid]: newGridValue,
-                    [this.content.wwObjects[fromIndex].uid]: sum - newGridValue,
+                    [this.dragingIndex]: newGridValue,
+                    [fromIndex]: sum - newGridValue,
                 });
             } else {
                 if (this.content.behavior === 'wrap') {
                     newGridValue = Math.min(newGridValue, this.content.lengthInUnit);
                 }
                 this.setGridValue({
-                    [this.content.wwObjects[this.isBinded ? 0 : this.dragingIndex].uid]: newGridValue,
+                    [this.isBinded ? 0 : this.dragingIndex]: newGridValue,
                 });
             }
         },
         setGridValue(update) {
-            const grid = { ...this.content.grid, ...update };
+            const grid = this.content.grid.map((val, i) => update[i] || val);
             if (!_.isEqual(grid, this.content.grid)) {
                 this.$emit('update', { grid });
             }
         },
-        equalize() {
-            if (this.isEmpty) {
-                return;
-            }
-            let lengthInUnit = this.content.lengthInUnit;
-
-            if (this.isBinded) {
-                const grid = { ...this.content.grid };
-                if (!grid[this.content.wwObjects[0].uid] || grid[this.content.wwObjects[0].uid] > lengthInUnit) {
-                    grid[this.content.wwObjects[0].uid] = grid[this.content.wwObjects[0].uid] || lengthInUnit;
-                }
-                return;
-            }
-
-            //Set gridDisplay
-            let gridDisplay = [...this.content.gridDisplay];
-            if (!gridDisplay.length) {
-                gridDisplay = this.content.wwObjects.map(() => true);
-            }
-            while (gridDisplay.length < this.content.wwObjects.length) {
-                gridDisplay.push(true);
-            }
-            while (gridDisplay.length > this.content.wwObjects.length) {
-                gridDisplay.pop();
-            }
-
-            let grid = _.cloneDeep(this.content.grid || {});
-
-            for (const wwObject of this.content.wwObjects) {
-                if (!grid[wwObject.uid]) {
-                    grid[wwObject.uid] = this.getGridAt(0) || lengthInUnit;
-                }
-            }
-
-            if (this.content.direction === 'row') {
-                if (this.content.behavior === 'fit') {
-                    //Check if lengthInUnit is enouth
-                    let newLengthInUnit = null;
-                    const visibleWwObjectCount = gridDisplay.filter(value => value !== false).length;
-                    if (lengthInUnit < visibleWwObjectCount) {
-                        newLengthInUnit = visibleWwObjectCount;
-                        lengthInUnit = visibleWwObjectCount;
-                    }
-
-                    //Check if total fits
-                    let totalGrid = gridDisplay.reduce(
-                        (total, display, i) => total + (display ? this.getGridAt(i, grid) : 0),
-                        0
-                    );
-
-                    if (totalGrid != lengthInUnit) {
-                        grid = {};
-                        const itemLength = Math.floor(lengthInUnit / visibleWwObjectCount);
-                        const firstItemLength = lengthInUnit - (visibleWwObjectCount - 1) * itemLength;
-                        for (const index in this.content.wwObjects) {
-                            grid[this.content.wwObjects[index].uid] = `${index}` === '0' ? firstItemLength : itemLength;
-                        }
-                    }
-
-                    //Check need for update
-                    const isEqual = false; //_.isEqual(grid, this.content.grid);
-                    if (newLengthInUnit || !isEqual) {
-                        const update = {};
-                        if (newLengthInUnit) update.lengthInUnit = newLengthInUnit;
-                        if (!isEqual) {
-                            update.grid = grid;
-                        }
-                        this.$emit('update', update);
-                    }
-
-                    return;
-                }
-
-                if (this.content.type === 'flex') {
-                    return;
-                }
-
-                for (const index in this.content.wwObjects) {
-                    if (!this.getGridAt(index, grid)) {
-                        grid[this.content.wwObjects[index].uid] =
-                            this.getGridAt(index - 1, grid) || this.getGridAt(0, grid);
-                    }
-                    grid[this.content.wwObjects[index].uid] = Math.min(
-                        grid[this.content.wwObjects[index].uid],
-                        lengthInUnit
-                    );
-                }
-
-                if (!_.isEqual(grid, this.content.grid)) {
-                    this.$emit('update', { grid });
-                }
-            }
-        },
+        equalize() {},
         transformGrid() {
-            if (Array.isArray(this.content.grid)) {
-                const grid = {};
+            if (!Array.isArray(this.content.grid)) {
+                const grid = [];
                 for (const index in this.content.wwObjects) {
-                    grid[this.content.wwObjects[index].uid] = this.content.grid[index] || 0;
+                    grid.push(this.content.grid[this.content.wwObjects[index].uid] || this.content.lengthInUnit);
                 }
                 this.$emit('update', { grid });
+                return grid;
             }
+            return this.content.grid;
         },
         /* wwEditor:end */
     },
