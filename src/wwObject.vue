@@ -1,5 +1,5 @@
 <template>
-    <div class="ww-container" :class="[level % 2 === 0 ? 'blue' : 'green', { editing: isEditing, empty: isEmpty }]">
+    <div class="ww-container" :class="{ editing: isEditing, empty: isEmpty }">
         <wwLayout
             class="ww-container__layout"
             :class="content.direction"
@@ -150,9 +150,6 @@ export default {
             /* wwEditor:end */
             return false;
         },
-        screenSize() {
-            return this.$store.getters['front/getScreenSize'];
-        },
         level() {
             return this.parentLevel + 1;
         },
@@ -214,7 +211,7 @@ export default {
                     if (newVal) {
                         const gridDisplay = this.content.gridDisplay.map(_ => true);
                         const behavior = this.content.behavior === 'fit' ? 'wrap' : this.content.behavior;
-                        this.$emit('update', { behavior, gridDisplay });
+                        this.$emit('update-effect', { behavior, gridDisplay });
                     }
                 }
             },
@@ -237,14 +234,18 @@ export default {
                 !_.isEqual(newContent.grid, oldContent.grid) ||
                 !_.isEqual(newContent.gridDisplay, oldContent.gridDisplay)
             ) {
-                if (this.objectId === '0f8bb863-08c8-413d-9902-a3f84cd55a52') debugger;
-                let grid = this.transformGrid();
+                let grid = this.normalizeGrid(newContent.grid); // legacy
                 if (this.content.behavior === 'fit') {
                     grid = this.fit(this.content.wwObjects, this.content.grid, this.content.gridDisplay);
                 } else {
                     grid = this.content.grid.map(item => Math.min(item, this.content.lengthInUnit));
                 }
-                if (!_.isEqual(grid, this.content.grid)) this.$emit('update', { grid });
+                if (!_.isEqual(grid, this.content.grid)) this.$emit('update-effect', { grid });
+            }
+        },
+        'content.grid'(grid) {
+            if (!Array.isArray(grid)) {
+                this.$emit('update-effect', { grid: this.normalizeGrid(grid) });
             }
         },
         /* wwEditor:end */
@@ -344,25 +345,25 @@ export default {
             gridDisplay = gridDisplay.slice(0, event.list.length);
 
             if (this.content.direction === 'column') {
-                this.$emit('update', { gridDisplay });
+                this.$emit('update-effect', { gridDisplay });
             } else {
                 const grid = this.getNewGrid(event, gridDisplay);
-
-                this.$emit('update', { grid, gridDisplay });
+                this.$emit('update-effect', { grid, gridDisplay });
             }
             /* wwEditor:end */
         },
         getNewGrid(event, gridDisplay) {
             let grid;
             switch (event.type) {
-                case 'add':
+                case 'add': {
                     const index = Math.max(0, event.index - 1);
                     grid = [...this.content.grid];
-                    grid.splice(event.index, 0, this.content.grid[index]);
+                    grid.splice(event.index, 0, this.content.grid[index] || this.content.lengthInUnit);
                     if (this.content.behavior === 'fit') {
                         grid = this.fit(event.list, grid, gridDisplay);
                     }
                     break;
+                }
                 case 'remove':
                     grid = [...this.content.grid];
                     grid.splice(event.fromIndex, 1);
@@ -404,9 +405,6 @@ export default {
             });
         },
         /* wwEditor:start */
-        add(index) {
-            this.$refs.layout.add(index);
-        },
         startDrag(event, index, handle) {
             this.dragingIndex = index;
             this.dragingHandle = handle;
@@ -451,24 +449,24 @@ export default {
                 this.$emit('update', { grid });
             }
         },
-        equalize() {},
-        transformGrid() {
-            if (!Array.isArray(this.content.grid)) {
-                const grid = [];
+        // Legacy
+        normalizeGrid(grid) {
+            if (!Array.isArray(grid)) {
+                const newGrid = [];
                 for (const index in this.content.wwObjects) {
-                    grid.push(this.content.grid[this.content.wwObjects[index].uid] || this.content.lengthInUnit);
+                    newGrid.push(this.content.grid[this.content.wwObjects[index].uid] || this.content.lengthInUnit);
                 }
-                this.$emit('update', { grid });
-                return grid;
+                return newGrid;
             }
-            return this.content.grid;
+            return grid;
         },
         /* wwEditor:end */
     },
     mounted() {
         /* wwEditor:start */
-        this.transformGrid();
-        this.$nextTick(this.equalize);
+        if (!Array.isArray(this.content.grid)) {
+            this.$emit('update-effect', { grid: this.normalizeGrid(this.content.grid) });
+        }
         /* wwEditor:end */
     },
 };
@@ -498,6 +496,7 @@ export default {
             flex: 1;
         }
     }
+
     &__item {
         position: relative;
         box-sizing: border-box;
@@ -558,16 +557,6 @@ export default {
         &:hover {
             transform: translate(-50%, -50%) scale(1.3);
         }
-
-        // &:after {
-        //     content: '';
-        //     position: absolute;
-        //     top: 50%;
-        //     left: 50%;
-        //     transform: translate(-50%, -50%) rotate(45deg);
-        //     width: 30px;
-        //     height: 30px;
-        // }
     }
     &__handle {
         position: absolute;
@@ -625,9 +614,6 @@ export default {
         &.empty {
             & > .ww-container__border {
                 display: block;
-            }
-            & > .ww-container__plus {
-                display: flex;
             }
         }
     }
