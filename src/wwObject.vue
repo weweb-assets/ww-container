@@ -243,10 +243,8 @@ export default {
                 if (!_.isEqual(grid, this.content.grid)) this.$emit('update-effect', { grid });
             }
         },
-        'content.grid'(grid) {
-            if (!Array.isArray(grid)) {
-                this.$emit('update-effect', { grid: this.normalizeGrid(grid) });
-            }
+        'content.grid'() {
+            this.correctData();
         },
         /* wwEditor:end */
     },
@@ -460,13 +458,33 @@ export default {
             }
             return grid;
         },
+        correctData() {
+            let update = null;
+            if (!Array.isArray(this.content.grid)) {
+                update = update || {};
+                update.grid = this.normalizeGrid(this.content.grid);
+            } else if (this.content.grid.length !== this.content.wwObjects.length) {
+                update = update || {};
+                const grid = update.grid || this.content.grid;
+                update.grid = this.content.wwObjects.map((_, index) =>
+                    grid[index] !== undefined ? grid[index] : true
+                );
+            }
+            if (this.content.gridDisplay.length !== this.content.wwObjects) {
+                update = update || {};
+                update.gridDisplay = this.content.wwObjects.map((_, index) =>
+                    this.content.gridDisplay[index] !== undefined ? this.content.gridDisplay[index] : true
+                );
+            }
+            if (update) {
+                this.$emit('update-effect', update);
+            }
+        },
         /* wwEditor:end */
     },
     mounted() {
         /* wwEditor:start */
-        if (!Array.isArray(this.content.grid)) {
-            this.$emit('update-effect', { grid: this.normalizeGrid(this.content.grid) });
-        }
+        this.correctData();
         /* wwEditor:end */
     },
 };
