@@ -20,10 +20,9 @@
                         {
                             editing: isEditing,
                             draging: dragingIndex === index,
-                            'show-length': showLength,
                         },
                     ]"
-                    :style="getItemStyle(item, index)"
+                    :style="itemStyles[index]"
                     :ww-responsive="`index-${index}`"
                     ref="layoutItem"
                 >
@@ -32,7 +31,7 @@
                         class="ww-container__object"
                         :data-ww-layout-id="layoutId"
                         :data-ww-layout-index="index"
-                        :style="wwObjectStyle"
+                        :style="{ height: wwObjectHeight }"
                         :ww-responsive="`wwobject-${index}`"
                     ></wwObject>
                     <!-- wwManager:start -->
@@ -125,6 +124,10 @@ export default {
         return {
             dragingHandle: 'start',
             dragingIndex: -1,
+            layoutStyle: {},
+            mustPushLast: false,
+            wwObjectHeight: 'auto',
+            itemStyles: [],
 
             /* wwEditor:start */
             isHover: false,
@@ -159,44 +162,7 @@ export default {
         showLength() {
             return this.isDraging || this.isHover;
         },
-        layoutStyle() {
-            const style = {};
 
-            //DIRECTION
-            style.flexDirection = `${this.content.direction}`;
-
-            style.width = 'unset';
-            style.flexWrap = 'unset';
-            style.justifyContent = 'unset';
-            style.overflowX = 'visible';
-            style.columnGap = 'unset';
-
-            if (this.content.direction === 'column') {
-                style.justifyContent = this.content.justifyContent;
-            } else if (this.content.type === 'flex') {
-                style.width = '100%';
-                style.flexWrap = 'wrap';
-                style.justifyContent = this.content.justifyContent;
-                style.columnGap = this.content.columnGap;
-            } else if (this.content.behavior === 'wrap') {
-                style.flexWrap = 'wrap';
-                style.justifyContent = this.content.justifyContent;
-            } else if (this.content.behavior === 'scroll') {
-                style.overflowX = 'auto';
-                style.width = '100%';
-            }
-
-            return style;
-        },
-        wwObjectStyle() {
-            if (this.content.alignItems === 'stretch') {
-                return { height: '100%' };
-            }
-            return { height: 'auto' };
-        },
-        mustPushLast() {
-            return (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
-        },
         /* wwEditor:start */
         menuSize() {
             return `${6 * (this.level - 1)}px`;
@@ -241,14 +207,62 @@ export default {
                     grid = this.content.grid.map(item => Math.min(item, this.content.lengthInUnit));
                 }
                 if (!_.isEqual(grid, this.content.grid)) this.$emit('update-effect', { grid });
+
+                this.setItemStyles();
             }
         },
         'content.grid'() {
             this.correctData();
         },
+
         /* wwEditor:end */
     },
     methods: {
+        setLayoutStyle(newVal, oldVal) {
+            if (newVal && newVal === oldVal) return;
+
+            const style = {};
+
+            //DIRECTION
+            style.flexDirection = `${this.content.direction}`;
+
+            style.width = 'unset';
+            style.flexWrap = 'unset';
+            style.justifyContent = 'unset';
+            style.overflowX = 'visible';
+            style.columnGap = 'unset';
+
+            if (this.content.direction === 'column') {
+                style.justifyContent = this.content.justifyContent;
+            } else if (this.content.type === 'flex') {
+                style.width = '100%';
+                style.flexWrap = 'wrap';
+                style.justifyContent = this.content.justifyContent;
+                style.columnGap = this.content.columnGap;
+            } else if (this.content.behavior === 'wrap') {
+                style.flexWrap = 'wrap';
+                style.justifyContent = this.content.justifyContent;
+            } else if (this.content.behavior === 'scroll') {
+                style.overflowX = 'auto';
+                style.width = '100%';
+            }
+
+            this.layoutStyle = style;
+
+            this.mustPushLast =
+                (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
+
+            this.wwObjectHeight = this.content.alignItems === 'stretch' ? '100%' : 'auto';
+        },
+        setItemStyles() {
+            for (const index in this.content.wwObjects) {
+                const itemStyle = this.getItemStyle(this.content.wwObjects[index], index);
+
+                if (!this.itemStyles[index] || !_.isEqual(itemStyle, this.itemStyles[index])) {
+                    this.itemStyles[index] = itemStyle;
+                }
+            }
+        },
         getItemStyle(item, index) {
             const style = {
                 display: 'block',
@@ -485,6 +499,17 @@ export default {
     },
     mounted() {
         /* wwEditor:start */
+        this.setLayoutStyle();
+        this.setItemStyles();
+
+        this.$watch('content.direction', this.setLayoutStyle);
+        this.$watch('content.justifyContent', this.setLayoutStyle);
+        this.$watch('content.type', this.setLayoutStyle);
+        this.$watch('content.columnGap', this.setLayoutStyle);
+        this.$watch('content.behavior', this.setLayoutStyle);
+        this.$watch('content.pushLast', this.setLayoutStyle);
+        this.$watch('content.alignItems', this.setLayoutStyle);
+
         this.correctData();
         /* wwEditor:end */
     },
