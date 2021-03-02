@@ -22,7 +22,7 @@
                             draging: dragingIndex === index,
                         },
                     ]"
-                    :style="itemStyles[index]"
+                    :style="getItemStyle(item, index)"
                     :ww-responsive="`index-${index}`"
                     ref="layoutItem"
                 >
@@ -127,7 +127,6 @@ export default {
             layoutStyle: {},
             mustPushLast: false,
             wwObjectHeight: 'auto',
-            itemStyles: [],
 
             /* wwEditor:start */
             isHover: false,
@@ -193,6 +192,9 @@ export default {
             }
         },
         content(newContent, oldContent) {
+            if (this.wwEditorState.isACopy) {
+                return;
+            }
             if (
                 newContent.lengthInUnit !== oldContent.lengthInUnit ||
                 newContent.behavior !== oldContent.behavior ||
@@ -253,15 +255,6 @@ export default {
                 (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
 
             this.wwObjectHeight = this.content.alignItems === 'stretch' ? '100%' : 'auto';
-        },
-        setItemStyles() {
-            for (const index in this.content.wwObjects) {
-                const itemStyle = this.getItemStyle(this.content.wwObjects[index], index);
-
-                if (!this.itemStyles[index] || !_.isEqual(itemStyle, this.itemStyles[index])) {
-                    this.itemStyles[index] = itemStyle;
-                }
-            }
         },
         getItemStyle(item, index) {
             const style = {
@@ -500,7 +493,6 @@ export default {
     mounted() {
         /* wwEditor:start */
         this.setLayoutStyle();
-        this.setItemStyles();
 
         this.$watch('content.direction', this.setLayoutStyle);
         this.$watch('content.justifyContent', this.setLayoutStyle);
