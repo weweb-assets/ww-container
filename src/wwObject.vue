@@ -32,7 +32,7 @@
                         class="ww-container__object"
                         :data-ww-layout-id="layoutId"
                         :data-ww-layout-index="index"
-                        :style="wwObjectStyle"
+                        :style="{ height: wwObjectHeight }"
                         :ww-responsive="`wwobject-${index}`"
                     ></wwObject>
                     <!-- wwManager:start -->
@@ -126,6 +126,11 @@ export default {
             dragingHandle: 'start',
             dragingIndex: -1,
 
+            // Optimisation because content change a lot
+            layoutStyle: this.getLayoutStyle(),
+            wwObjectHeight: this.getWwObjectHeight(),
+            mustPushLast: this.getMustPushLast(),
+
             /* wwEditor:start */
             isHover: false,
             /* wwEditor:end */
@@ -158,44 +163,6 @@ export default {
         },
         showLength() {
             return this.isDraging || this.isHover;
-        },
-        layoutStyle() {
-            const style = {};
-
-            //DIRECTION
-            style.flexDirection = `${this.content.direction}`;
-
-            style.width = 'unset';
-            style.flexWrap = 'unset';
-            style.justifyContent = 'unset';
-            style.overflowX = 'visible';
-            style.columnGap = 'unset';
-
-            if (this.content.direction === 'column') {
-                style.justifyContent = this.content.justifyContent;
-            } else if (this.content.type === 'flex') {
-                style.width = '100%';
-                style.flexWrap = 'wrap';
-                style.justifyContent = this.content.justifyContent;
-                style.columnGap = this.content.columnGap;
-            } else if (this.content.behavior === 'wrap') {
-                style.flexWrap = 'wrap';
-                style.justifyContent = this.content.justifyContent;
-            } else if (this.content.behavior === 'scroll') {
-                style.overflowX = 'auto';
-                style.width = '100%';
-            }
-
-            return style;
-        },
-        wwObjectStyle() {
-            if (this.content.alignItems === 'stretch') {
-                return { height: '100%' };
-            }
-            return { height: 'auto' };
-        },
-        mustPushLast() {
-            return (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
         },
         /* wwEditor:start */
         menuSize() {
@@ -254,9 +221,69 @@ export default {
                 this.correctData();
             }
         },
+        'content.alignItems'(newVal, oldVal) {
+            if (newVal !== oldVal) {
+                this.wwObjectHeight = this.getWwObjectHeight();
+            }
+        },
+        'content.mustPushLast'(newVal, oldVal) {
+            if (newVal !== oldVal) {
+                this.mustPushLast = this.getMustPushLast();
+            }
+        },
+        'content.direction'(...options) {
+            this.updateLayoutStyle(options);
+        },
+        'content.justifyContent'(...options) {
+            this.updateLayoutStyle(options);
+        },
+        'content.columnGap'(...options) {
+            this.updateLayoutStyle(options);
+        },
+        'content.behavior'(...options) {
+            this.updateLayoutStyle(options);
+        },
         /* wwEditor:end */
     },
     methods: {
+        getWwObjectHeight() {
+            return this.content.alignItems === 'stretch' ? '100%' : 'auto';
+        },
+        getMustPushLast() {
+            return (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
+        },
+        getLayoutStyle() {
+            const style = {};
+
+            //DIRECTION
+            style.flexDirection = `${this.content.direction}`;
+            style.width = 'unset';
+            style.flexWrap = 'unset';
+            style.justifyContent = 'unset';
+            style.overflowX = 'visible';
+            style.columnGap = 'unset';
+            if (this.content.direction === 'column') {
+                style.justifyContent = this.content.justifyContent;
+            } else if (this.content.type === 'flex') {
+                style.width = '100%';
+                style.flexWrap = 'wrap';
+                style.justifyContent = this.content.justifyContent;
+                style.columnGap = this.content.columnGap;
+            } else if (this.content.behavior === 'wrap') {
+                style.flexWrap = 'wrap';
+                style.justifyContent = this.content.justifyContent;
+            } else if (this.content.behavior === 'scroll') {
+                style.overflowX = 'auto';
+                style.width = '100%';
+            }
+
+            return style;
+        },
+        updateLayoutStyle(oldVal, newVal) {
+            if (oldVal !== newVal) {
+                this.layoutStyle = this.getLayoutStyle();
+            }
+        },
         getItemStyle(item, index) {
             const style = {
                 display: 'block',
