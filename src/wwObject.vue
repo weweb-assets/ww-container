@@ -227,11 +227,14 @@ export default {
             }
         },
         content(newContent, oldContent) {
+            if (this.wwEditorState.isACopy) {
+                return;
+            }
             if (
                 newContent.lengthInUnit !== oldContent.lengthInUnit ||
                 newContent.behavior !== oldContent.behavior ||
                 newContent.type !== oldContent.type ||
-                !_.isEqual(newContent.grid, oldContent.grid) ||
+                (!_.isEqual(newContent.grid, oldContent.grid) && !this.isDraging) ||
                 !_.isEqual(newContent.gridDisplay, oldContent.gridDisplay)
             ) {
                 let grid = this.normalizeGrid(newContent.grid); // legacy
@@ -244,7 +247,12 @@ export default {
             }
         },
         'content.grid'() {
-            this.correctData();
+            if (this.wwEditorState.isACopy) {
+                return;
+            }
+            if (!this.isDraging) {
+                this.correctData();
+            }
         },
         /* wwEditor:end */
     },
