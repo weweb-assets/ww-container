@@ -82,6 +82,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import { getRowConfiguration, getColumnConfiguration } from './configuration';
 
 export default {
@@ -135,6 +136,9 @@ export default {
         };
     },
     computed: {
+        ...mapGetters({
+            screenSize: 'front/getScreenSize',
+        }),
         isEditing() {
             /* wwEditor:start */
             return this.wwEditorState.editMode === wwLib.wwEditorHelper.EDIT_MODES.EDITION;
@@ -169,6 +173,14 @@ export default {
         /* wwEditor:end */
     },
     watch: {
+        /* wwFront:start */
+        screenSize(newVal, oldVal) {
+            if (newVal !== oldVal) {
+                this.layoutStyle = this.getLayoutStyle();
+                this.wwObjectFlex = this.getWwObjectFlex();
+            }
+        },
+        /* wwFront:end */
         /* wwEditor:start */
         isBinded: {
             handler(newVal, oldVal) {
