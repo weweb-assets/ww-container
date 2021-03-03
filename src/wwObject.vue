@@ -354,7 +354,7 @@ export default {
                 style.minWidth = '40px';
                 return style;
             }
-            const widthInUnit = this.getGridAt(index);
+            const widthInUnit = this.getGridAt(item.uid.indexOf('_') !== -1 ? 0 : index);
             style.width = `calc(${widthInUnit} * 100% / ${this.content.lengthInUnit})`;
             style.flexShrink = '0';
 
