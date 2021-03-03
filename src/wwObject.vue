@@ -164,7 +164,7 @@ export default {
         },
         /* wwEditor:start */
         menuSize() {
-            return `${6 * (this.level - 1)}px`;
+            return 0; //`${6 * (this.level - 1)}px`;
         },
         /* wwEditor:end */
     },
