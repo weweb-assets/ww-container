@@ -183,7 +183,6 @@ export default {
         /* wwEditor:end */
     },
     watch: {
-<<<<<<< HEAD
         /* wwFront:start */
         screenSize(newVal, oldVal) {
             if (newVal !== oldVal) {
@@ -192,13 +191,11 @@ export default {
             }
         },
         /* wwFront:end */
-=======
         total(val, oldVal) {
             if (val !== oldVal) {
                 this.start = 0;
             }
         },
->>>>>>> 1408b42 (Handle pagination)
         /* wwEditor:start */
         isBinded: {
             handler(newVal, oldVal) {
