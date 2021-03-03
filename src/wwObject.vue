@@ -298,11 +298,14 @@ export default {
             }
 
             //Push last
-            if (this.content.pushLast && index === this.content.wwObjects.length - 1) {
-                if (this.content.direction === 'column') {
-                    style.marginTop = 'auto';
-                } else if (this.content.type === 'flex') {
-                    style.marginLeft = 'auto';
+            if (this.content.pushLast) {
+                const push = !this.content.reverse ? index === this.content.wwObjects.length - 1 : index === 0;
+                if (push) {
+                    if (this.content.direction === 'column') {
+                        style.marginTop = 'auto';
+                    } else if (this.content.type === 'flex') {
+                        style.marginLeft = 'auto';
+                    }
                 }
             }
 
