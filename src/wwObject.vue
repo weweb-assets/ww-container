@@ -7,7 +7,6 @@
             ww-responsive="ww-layout"
             :direction="content.direction"
             :type="content.type"
-            :placeholderIndex="mustPushLast ? -1 : null"
             :max="content.maxItem"
             path="wwObjects"
             ref="layout"
@@ -32,7 +31,7 @@
                         class="ww-container__object"
                         :data-ww-layout-id="layoutId"
                         :data-ww-layout-index="index"
-                        :style="{ height: wwObjectHeight }"
+                        :style="{ flex: wwObjectFlex }"
                         :ww-responsive="`wwobject-${index}`"
                     ></wwObject>
                     <!-- wwManager:start -->
@@ -128,8 +127,7 @@ export default {
 
             // Optimisation because content change a lot
             layoutStyle: this.getLayoutStyle(),
-            wwObjectHeight: this.getWwObjectHeight(),
-            mustPushLast: this.getMustPushLast(),
+            wwObjectFlex: this.getWwObjectFlex(),
 
             /* wwEditor:start */
             isHover: false,
@@ -223,12 +221,7 @@ export default {
         },
         'content.alignItems'(newVal, oldVal) {
             if (newVal !== oldVal) {
-                this.wwObjectHeight = this.getWwObjectHeight();
-            }
-        },
-        'content.mustPushLast'(newVal, oldVal) {
-            if (newVal !== oldVal) {
-                this.mustPushLast = this.getMustPushLast();
+                this.wwObjectFlex = this.getWwObjectFlex();
             }
         },
         'content.direction'(...options) {
@@ -246,11 +239,8 @@ export default {
         /* wwEditor:end */
     },
     methods: {
-        getWwObjectHeight() {
-            return this.content.alignItems === 'stretch' ? '100%' : 'auto';
-        },
-        getMustPushLast() {
-            return (this.content.type === 'flex' || this.content.direction === 'column') && this.content.pushLast;
+        getWwObjectFlex() {
+            return this.content.alignItems === 'stretch' ? '1' : 'unset';
         },
         getLayoutStyle() {
             const style = {};
@@ -307,14 +297,24 @@ export default {
                 return style;
             }
 
+            //Push last
+            if (this.content.pushLast && index === this.content.wwObjects.length - 1) {
+                if (this.content.direction === 'column') {
+                    style.marginTop = 'auto';
+                } else if (this.content.type === 'flex') {
+                    style.marginLeft = 'auto';
+                }
+            }
+
             //Column
             if (this.content.direction === 'column') {
                 return style;
             }
 
+            style.display = 'flex';
+
             //Stretch
             if (this.content.alignItems !== 'stretch') {
-                style.display = 'flex';
                 style.flexDirection = 'column';
                 style.justifyContent = this.content.alignItems;
             }
