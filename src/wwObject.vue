@@ -82,7 +82,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 import { getRowConfiguration, getColumnConfiguration } from './configuration';
 
 export default {
@@ -136,9 +135,9 @@ export default {
         };
     },
     computed: {
-        ...mapGetters({
-            screenSize: 'front/getScreenSize',
-        }),
+        screenSize() {
+            return this.$store.getters['front/getScreenSize'];
+        },
         isEditing() {
             /* wwEditor:start */
             return this.wwEditorState.editMode === wwLib.wwEditorHelper.EDIT_MODES.EDITION;
