@@ -171,7 +171,8 @@ function getGridAndDisplay(disabled, content, isBinded) {
 }
 
 export function getRowConfiguration(content, bindedProps) {
-    const isBinded = bindedProps.wwObjects;
+    const isBinded = bindedProps && bindedProps.wwObjects;
+
     return {
         styleOptions: {
             ...COMMON_STYLE,
@@ -192,7 +193,8 @@ export function getRowConfiguration(content, bindedProps) {
 }
 
 export function getColumnConfiguration(content, bindedProps) {
-    const isBinded = bindedProps.wwObjects;
+    const isBinded = bindedProps && bindedProps.wwObjects;
+
     return {
         styleOptions: {
             ...COMMON_STYLE,

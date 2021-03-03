@@ -101,6 +101,8 @@ export default {
         maxItem: wwLib.responsive(50),
     },
     wwEditorConfiguration({ content, bindedProps }) {
+        console.log('bindedProps', bindedProps);
+
         return content.direction === 'row'
             ? getRowConfiguration(content, bindedProps)
             : getColumnConfiguration(content, bindedProps);
