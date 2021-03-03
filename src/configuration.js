@@ -124,6 +124,19 @@ const MAX_ITEM = {
         max: 100,
     },
 };
+const PAGINATION = {
+    label: {
+        en: 'Use pagination ?',
+    },
+    type: 'TextRadioGroup',
+    options: {
+        choices: [
+            { title: 'bottom', value: 'bottom', label: 'Bottom' },
+            { title: 'top', value: 'top', label: 'Top' },
+            { title: 'None', value: null, label: 'None' },
+        ],
+    },
+};
 
 function getGridAndDisplay(disabled, content, isBinded) {
     const gridAndDisplay = {
@@ -151,6 +164,9 @@ function getGridAndDisplay(disabled, content, isBinded) {
                   },
               }),
     };
+
+    gridAndDisplay.maxItem = MAX_ITEM;
+    gridAndDisplay.pagination = PAGINATION;
 
     if (!isBinded) {
         gridAndDisplay['grid-display'] = {
@@ -187,7 +203,6 @@ export function getRowConfiguration(content, bindedProps) {
         },
         settingsOptions: {
             ...getGridAndDisplay(content.type === 'flex', content, isBinded),
-            maxItem: MAX_ITEM,
         },
     };
 }
@@ -206,7 +221,6 @@ export function getColumnConfiguration(content, bindedProps) {
         },
         settingsOptions: {
             ...getGridAndDisplay(true, content, isBinded),
-            maxItem: MAX_ITEM,
         },
     };
 }
