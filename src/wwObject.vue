@@ -195,8 +195,9 @@ export default {
             if (this.wwEditorState.isACopy) {
                 return;
             }
+            this.oldLengthInUnit = oldContent.lengthInUnit || this.oldLengthInUnit || newContent.lengthInUnit;
             if (
-                newContent.lengthInUnit !== oldContent.lengthInUnit ||
+                (newContent.lengthInUnit && newContent.lengthInUnit !== oldContent.lengthInUnit) ||
                 newContent.behavior !== oldContent.behavior ||
                 newContent.type !== oldContent.type ||
                 (!_.isEqual(newContent.grid, oldContent.grid) && !this.isDraging) ||
@@ -206,7 +207,12 @@ export default {
                 if (this.content.behavior === 'fit') {
                     grid = this.fit(this.content.wwObjects, this.content.grid, this.content.gridDisplay);
                 } else {
-                    grid = this.content.grid.map(item => Math.min(item, this.content.lengthInUnit));
+                    const getNewGridItem = item => {
+                        return Math.round(
+                            (newContent.lengthInUnit * item) / (this.oldLengthInUnit || newContent.lengthInUnit)
+                        );
+                    };
+                    grid = this.content.grid.map(item => Math.min(getNewGridItem(item), this.content.lengthInUnit));
                 }
                 if (!_.isEqual(grid, this.content.grid)) this.$emit('update-effect', { grid });
             }
