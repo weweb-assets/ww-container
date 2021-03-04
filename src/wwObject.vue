@@ -185,9 +185,16 @@ export default {
             handler(newVal, oldVal) {
                 if (!_.isEqual(newVal, oldVal)) {
                     if (newVal) {
-                        const gridDisplay = this.content.gridDisplay.map(_ => true);
+                        let gridDisplay = [];
+                        let grid = [];
+                        let wwObjects = [];
+                        if (this.content.wwObjects.length) {
+                            gridDisplay = [true];
+                            grid = [this.content.grid[0]];
+                            wwObjects = [this.content.wwObjects[0]];
+                        }
                         const behavior = this.content.behavior === 'fit' ? 'wrap' : this.content.behavior;
-                        this.$emit('update-effect', { behavior, gridDisplay });
+                        this.$emit('update-effect', { behavior, gridDisplay, grid, wwObjects });
                     }
                 }
             },
@@ -353,7 +360,7 @@ export default {
                 style.minWidth = '40px';
                 return style;
             }
-            const widthInUnit = this.getGridAt(item.uid.indexOf('_') !== -1 ? 0 : index);
+            const widthInUnit = this.getGridAt(index);
             style.width = `calc(${widthInUnit} * 100% / ${this.content.lengthInUnit})`;
             style.flexShrink = '0';
 
