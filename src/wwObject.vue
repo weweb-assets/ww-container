@@ -86,9 +86,9 @@ import { getRowConfiguration, getColumnConfiguration } from './configuration';
 
 export default {
     wwDefaultContent: {
-        wwObjects: wwLib.ignoreState([]),
-        grid: wwLib.ignoreState(wwLib.responsive([])),
-        gridDisplay: wwLib.ignoreState(wwLib.responsive([])),
+        wwObjects: [],
+        grid: wwLib.responsive([]),
+        gridDisplay: wwLib.responsive([]),
         direction: wwLib.responsive('row'),
         reverse: wwLib.responsive(false),
         lengthInUnit: wwLib.responsive(100),
