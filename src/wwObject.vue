@@ -532,7 +532,7 @@ export default {
                     grid[index] !== undefined ? grid[index] : true
                 );
             }
-            if (this.content.gridDisplay.length !== this.content.wwObjects) {
+            if (this.content.gridDisplay.length !== this.content.wwObjects.length) {
                 update = update || {};
                 update.gridDisplay = this.content.wwObjects.map((_, index) =>
                     this.content.gridDisplay[index] !== undefined ? this.content.gridDisplay[index] : true
