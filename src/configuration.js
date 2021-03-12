@@ -20,6 +20,7 @@ const COMMON_STYLE = {
         },
     },
 };
+
 const VERTICAL_ALIGN_ROW = {
     label: { en: 'Vertical alignement', fr: 'Alignement vertical' },
     type: 'TextRadioGroup',

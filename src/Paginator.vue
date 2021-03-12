@@ -14,7 +14,7 @@
                     <wwObject
                         v-bind="$parent.content.paginatorText"
                         :wwProps="{ text: nav.label }"
-                        :states="nav.states"
+                        :states="nav.index === currentPage ? ['active'] : []"
                     ></wwObject>
                 </li>
             </template>
@@ -128,6 +128,7 @@ ul {
     justify-content: center;
     list-style: none;
     margin: 0;
+    padding: 0;
     li {
         padding: 0;
         user-select: none;
