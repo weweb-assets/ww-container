@@ -277,6 +277,9 @@ export default {
             this.updateLayoutStyle(options);
         },
         'content.pagination'(isPaginated, wasPaginated) {
+            if (isPaginated !== wasPaginated) {
+                this.start = 0;
+            }
             if (this.wwEditorState.isACopy) {
                 return;
             }
