@@ -20,8 +20,8 @@
             "wwObjects": {
                 "bindable": "repeatable",
                 "label": {
-                    "en": "Content data",
-                    "fr": "Données"
+                    "en": "Data to repeat",
+                    "fr": "Données à répéter"
                 }
             }
         }
