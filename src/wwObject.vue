@@ -7,7 +7,7 @@
             :style="layoutStyle"
             ww-responsive="ww-layout"
             :direction="content.direction"
-            :type="content.type"
+            :inheritFromElement="inheritFromElement"
             :max="content.maxItem"
             :start="start"
             :pagination="!!content.pagination"
@@ -139,6 +139,7 @@ export default {
             // Optimisation because content change a lot
             layoutStyle: this.getLayoutStyle(),
             wwObjectFlex: this.getWwObjectFlex(),
+            inheritFromElement: this.getInheritFromElement(),
 
             /* wwEditor:start */
             isHover: false,
@@ -276,6 +277,11 @@ export default {
         'content.behavior'(...options) {
             this.updateLayoutStyle(options);
         },
+        'content.type'(newVal, oldVal) {
+            if (newVal !== oldVal) {
+                this.inheritFromElement = this.getInheritFromElement();
+            }
+        },
         'content.pagination'(isPaginated, wasPaginated) {
             if (isPaginated !== wasPaginated) {
                 this.start = 0;
@@ -300,6 +306,9 @@ export default {
     methods: {
         getWwObjectFlex() {
             return this.content.alignItems === 'stretch' ? '1' : 'unset';
+        },
+        getInheritFromElement() {
+            return this.content.type === 'flex' ? ['width'] : [];
         },
         getLayoutStyle() {
             const style = {};
@@ -336,7 +345,6 @@ export default {
         getItemStyle(item, index) {
             const style = {
                 display: 'block',
-                width: 'unset',
                 flexDirection: '',
                 justifyContent: 'unset',
                 minWidth: 'unset',
@@ -383,15 +391,6 @@ export default {
 
             //Flex
             if (this.content.type === 'flex') {
-                const wwObject = this.$store.getters['websiteData/getWwObject'](item.uid);
-
-                const width = wwLib.getResponsiveStyleProp({
-                    store: this.$store,
-                    style: (wwObject._state || {}).style || {},
-                    prop: 'width',
-                });
-                if (width && width.endsWith('%')) style.width = width;
-
                 style.minWidth = '40px';
                 return style;
             }
