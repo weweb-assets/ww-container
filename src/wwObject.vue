@@ -460,7 +460,7 @@ export default {
                 }
                 case 'remove':
                     grid = [...this.content.grid];
-                    grid.splice(event.fromIndex, 1);
+                    grid.splice(event.index, 1);
                     if (this.content.behavior === 'fit') {
                         grid = this.fit(event.list, grid, gridDisplay);
                     }
