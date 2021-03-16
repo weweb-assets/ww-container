@@ -3,18 +3,9 @@
     "editor": {
         "label": { "en": "Container", "fr": "Container" },
         "menuOptions": {
-            "items": [
-                {
-                    "name": "Sizing",
-                    "quick": [{ "type": "Sizing" }],
-                    "icon": "sizing"
-                },
-                {
-                    "name": "Background",
-                    "quick": [{ "type": "Background" }],
-                    "icon": "background"
-                }
-            ]
+            "quick": {
+                "sections": ["ww-sizing", "ww-background"]
+            }
         },
         "otherOptions": {
             "wwObjects": {
