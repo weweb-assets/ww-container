@@ -1,16 +1,20 @@
 <template>
     <div class="ww-container" :class="{ editing: isEditing, empty: isEmpty }">
+        <Paginator v-if="content.pagination === 'top'" class="paginator"></Paginator>
         <wwLayout
             class="ww-container__layout"
             :class="content.direction"
             :style="layoutStyle"
             ww-responsive="ww-layout"
             :direction="content.direction"
-            :type="content.type"
+            :inheritFromElement="inheritFromElement"
             :max="content.maxItem"
+            :start="start"
+            :pagination="!!content.pagination"
             path="wwObjects"
             ref="layout"
             @update="update"
+            @update:total="total = $event"
         >
             <template v-slot="{ layoutId, item, index }" class="ww-container__item">
                 <wwLayoutItem
@@ -67,6 +71,7 @@
                 </wwLayoutItem>
             </template>
         </wwLayout>
+        <Paginator v-if="content.pagination === 'bottom'" class="paginator"></Paginator>
         <!-- wwManager:start -->
         <div
             class="ww-container__menu"
@@ -83,8 +88,10 @@
 
 <script>
 import { getRowConfiguration, getColumnConfiguration } from './configuration';
+import Paginator from './Paginator.vue';
 
 export default {
+    components: { Paginator },
     wwDefaultContent: {
         wwObjects: [],
         grid: wwLib.responsive([]),
@@ -99,6 +106,7 @@ export default {
         alignItems: wwLib.responsive('start'),
         pushLast: wwLib.responsive(false),
         maxItem: wwLib.responsive(50),
+        pagination: wwLib.responsive(null),
     },
     wwEditorConfiguration({ content, bindedProps }) {
         return content.direction === 'row'
@@ -125,9 +133,13 @@ export default {
             dragingHandle: 'start',
             dragingIndex: -1,
 
+            start: 0,
+            total: 0,
+
             // Optimisation because content change a lot
             layoutStyle: this.getLayoutStyle(),
             wwObjectFlex: this.getWwObjectFlex(),
+            inheritFromElement: this.getInheritFromElement(),
 
             /* wwEditor:start */
             isHover: false,
@@ -180,6 +192,11 @@ export default {
             }
         },
         /* wwFront:end */
+        total(val, oldVal) {
+            if (val !== oldVal) {
+                this.start = 0;
+            }
+        },
         /* wwEditor:start */
         isBinded: {
             handler(newVal, oldVal) {
@@ -260,11 +277,38 @@ export default {
         'content.behavior'(...options) {
             this.updateLayoutStyle(options);
         },
+        'content.type'(newVal, oldVal) {
+            if (newVal !== oldVal) {
+                this.inheritFromElement = this.getInheritFromElement();
+            }
+        },
+        'content.pagination'(isPaginated, wasPaginated) {
+            if (isPaginated !== wasPaginated) {
+                this.start = 0;
+            }
+            if (this.wwEditorState.isACopy) {
+                return;
+            }
+            if (isPaginated && !wasPaginated && !this.content.maxItem) {
+                this.$emit('update-effect', { maxItem: 20 });
+            }
+        },
+        'content.maxItem'(newVal, oldVal) {
+            if (this.wwEditorState.isACopy) {
+                return;
+            }
+            if (!newVal && oldVal && this.content.pagination) {
+                this.$emit('update-effect', { pagination: null });
+            }
+        },
         /* wwEditor:end */
     },
     methods: {
         getWwObjectFlex() {
             return this.content.alignItems === 'stretch' ? '1' : 'unset';
+        },
+        getInheritFromElement() {
+            return this.content.type === 'flex' ? ['width'] : [];
         },
         getLayoutStyle() {
             const style = {};
@@ -301,7 +345,6 @@ export default {
         getItemStyle(item, index) {
             const style = {
                 display: 'block',
-                width: 'unset',
                 flexDirection: '',
                 justifyContent: 'unset',
                 minWidth: 'unset',
@@ -348,15 +391,6 @@ export default {
 
             //Flex
             if (this.content.type === 'flex') {
-                const wwObject = this.$store.getters['websiteData/getWwObject'](item.uid);
-
-                const width = wwLib.getResponsiveStyleProp({
-                    store: this.$store,
-                    style: (wwObject._state || {}).style || {},
-                    prop: 'width',
-                });
-                if (width && width.endsWith('%')) style.width = width;
-
                 style.minWidth = '40px';
                 return style;
             }
@@ -426,7 +460,7 @@ export default {
                 }
                 case 'remove':
                     grid = [...this.content.grid];
-                    grid.splice(event.fromIndex, 1);
+                    grid.splice(event.index, 1);
                     if (this.content.behavior === 'fit') {
                         grid = this.fit(event.list, grid, gridDisplay);
                     }
@@ -600,6 +634,9 @@ export default {
             }
         }
         /* wwEditor:end */
+    }
+    .paginator {
+        margin: 0 auto;
     }
 
     /* wwEditor:start */
