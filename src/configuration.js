@@ -91,13 +91,13 @@ const TYPE = {
     },
 };
 
-function getBehavior(isBinded) {
+function getBehavior(isBound) {
     return {
         label: { en: 'Line breaks (wrap)', fr: 'Line breaks (wrap)' },
         type: 'TextSelect',
         options: {
             options: [
-                ...(isBinded ? [] : [{ value: 'fit', label: { en: 'Fit onto one line', fr: 'Sur une ligne' } }]),
+                ...(isBound ? [] : [{ value: 'fit', label: { en: 'Fit onto one line', fr: 'Sur une ligne' } }]),
                 { value: 'wrap', label: { en: 'Wrap onto multiple lines', fr: 'A la ligne' } },
                 { value: 'scroll', label: { en: 'Scroll onto one line', fr: 'Scroll sur une ligne' } },
             ],
@@ -139,7 +139,7 @@ const PAGINATION = {
     },
 };
 
-function getGridAndDisplay(disabled, content, isBinded) {
+function getGridAndDisplay(disabled, content, isBound) {
     const gridAndDisplay = {
         lengthInUnitRadio: {
             path: 'lengthInUnit',
@@ -169,7 +169,7 @@ function getGridAndDisplay(disabled, content, isBinded) {
     gridAndDisplay.maxItem = MAX_ITEM;
     gridAndDisplay.pagination = PAGINATION;
 
-    if (!isBinded) {
+    if (!isBound) {
         gridAndDisplay['grid-display'] = {
             path: 'gridDisplay',
             isArray: true,
@@ -187,14 +187,14 @@ function getGridAndDisplay(disabled, content, isBinded) {
     return gridAndDisplay;
 }
 
-export function getRowConfiguration(content, bindedProps) {
-    const isBinded = bindedProps && bindedProps.wwObjects;
+export function getRowConfiguration(content, boundProps) {
+    const isBound = boundProps && boundProps.wwObjects;
 
     return {
         styleOptions: {
             ...COMMON_STYLE,
             type: TYPE,
-            ...(content.type === 'grid' ? { behavior: getBehavior(isBinded) } : null),
+            ...(content.type === 'grid' ? { behavior: getBehavior(isBound) } : null),
             alignItems: VERTICAL_ALIGN_ROW,
             ...(content.type === 'flex' || content.behavior === 'wrap'
                 ? { justifyContent: HORIZONTAL_ALIGN_ROW }
@@ -203,13 +203,13 @@ export function getRowConfiguration(content, bindedProps) {
             // ...(content.type === 'flex' ? { columnGap: COLUMN_GAP } : null),
         },
         settingsOptions: {
-            ...getGridAndDisplay(content.type === 'flex', content, isBinded),
+            ...getGridAndDisplay(content.type === 'flex', content, isBound),
         },
     };
 }
 
-export function getColumnConfiguration(content, bindedProps) {
-    const isBinded = bindedProps && bindedProps.wwObjects;
+export function getColumnConfiguration(content, boundProps) {
+    const isBound = boundProps && boundProps.wwObjects;
 
     return {
         styleOptions: {
@@ -221,7 +221,7 @@ export function getColumnConfiguration(content, bindedProps) {
             pushLast: PUSH_LAST,
         },
         settingsOptions: {
-            ...getGridAndDisplay(true, content, isBinded),
+            ...getGridAndDisplay(true, content, isBound),
         },
     };
 }

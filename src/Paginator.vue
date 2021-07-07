@@ -1,25 +1,25 @@
 <template>
     <nav role="navigation">
         <ul>
-            <li @click="prev" :class="{ 'hide-icon': !$parent.isEditing && currentPage === 0 }">
-                <wwObject v-bind="$parent.content.paginatorPrev" v-if="$parent.content.paginatorPrev"></wwObject>
+            <li :class="{ 'hide-icon': !$parent.isEditing && currentPage === 0 }" @click="prev">
+                <wwObject v-if="$parent.content.paginatorPrev" v-bind="$parent.content.paginatorPrev"></wwObject>
             </li>
             <template v-if="$parent.content.paginatorText">
                 <li
                     v-for="(nav, index) in navigation"
                     :key="index"
-                    @click="goTo(nav.index)"
                     :aria-current="nav.index === currentPage"
+                    @click="goTo(nav.index)"
                 >
                     <wwObject
                         v-bind="$parent.content.paginatorText"
-                        :wwProps="{ text: nav.label }"
+                        :ww-props="{ text: nav.label }"
                         :states="nav.index === currentPage ? ['active'] : []"
                     ></wwObject>
                 </li>
             </template>
-            <li @click="next" :class="{ 'hide-icon': !$parent.isEditing && currentPage === nbPage - 1 }">
-                <wwObject v-bind="$parent.content.paginatorNext" v-if="$parent.content.paginatorNext"></wwObject>
+            <li :class="{ 'hide-icon': !$parent.isEditing && currentPage === nbPage - 1 }" @click="next">
+                <wwObject v-if="$parent.content.paginatorNext" v-bind="$parent.content.paginatorNext"></wwObject>
             </li>
         </ul>
     </nav>
@@ -84,6 +84,23 @@ export default {
             return navigation;
         },
     },
+    async mounted() {
+        /* wwEditor:start */
+        if (this.$parent.wwEditorState.isACopy) {
+            return;
+        }
+        if (!this.$parent.content.paginatorText) {
+            this.$parent.$emit('update:content:effect', { paginatorText: await wwLib.createElement('ww-text') });
+        }
+        if (!this.$parent.content.paginatorPrev) {
+            const paginatorPrev = await wwLib.createElement('ww-icon');
+            this.$parent.$emit('update:content:effect', { paginatorPrev });
+        }
+        if (!this.$parent.content.paginatorNext) {
+            this.$parent.$emit('update:content:effect', { paginatorNext: await wwLib.createElement('ww-icon') });
+        }
+        /* wwEditor:end */
+    },
     methods: {
         goTo(index) {
             if (index !== -1 && index !== this.currentPage) {
@@ -100,23 +117,6 @@ export default {
                 this.goTo(this.currentPage + 1);
             }
         },
-    },
-    async mounted() {
-        /* wwEditor:start */
-        if (this.$parent.wwEditorState.isACopy) {
-            return;
-        }
-        if (!this.$parent.content.paginatorText) {
-            this.$parent.$emit('update-effect', { paginatorText: await wwLib.createElement('ww-text') });
-        }
-        if (!this.$parent.content.paginatorPrev) {
-            const paginatorPrev = await wwLib.createElement('ww-icon');
-            this.$parent.$emit('update-effect', { paginatorPrev });
-        }
-        if (!this.$parent.content.paginatorNext) {
-            this.$parent.$emit('update-effect', { paginatorNext: await wwLib.createElement('ww-icon') });
-        }
-        /* wwEditor:end */
     },
 };
 </script>

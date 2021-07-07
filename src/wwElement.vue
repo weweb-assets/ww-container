@@ -2,22 +2,23 @@
     <div class="ww-container" :class="{ editing: isEditing, empty: isEmpty }">
         <Paginator v-if="content.pagination === 'top'" class="paginator"></Paginator>
         <wwLayout
+            ref="layout"
             class="ww-container__layout"
             :class="content.direction"
             :style="layoutStyle"
             ww-responsive="ww-layout"
             :direction="content.direction"
-            :inheritFromElement="inheritFromElement"
+            :inherit-from-element="inheritFromElement"
             :max="content.maxItem"
             :start="start"
             :pagination="!!content.pagination"
             path="wwObjects"
-            ref="layout"
-            @update="update"
+            @update:list="update"
             @update:total="total = $event"
         >
-            <template v-slot="{ layoutId, item, index }" class="ww-container__item">
+            <template #default="{ layoutId, item, index }" class="ww-container__item">
                 <wwLayoutItem
+                    ref="layoutItem"
                     class="ww-container__item"
                     :class="[
                         {
@@ -28,7 +29,6 @@
                     ]"
                     :style="getItemStyle(item, index)"
                     :ww-responsive="`index-${index}`"
-                    ref="layoutItem"
                 >
                     <wwObject
                         v-bind="item"
@@ -38,7 +38,7 @@
                         :style="{ flex: wwObjectFlex }"
                         :ww-responsive="`wwobject-${index}`"
                     ></wwObject>
-                    <!-- wwManager:start -->
+                    <!-- wwEditor:start -->
                     <template v-if="isEditing && content.direction === 'row' && content.type === 'grid'">
                         <wwDraggable
                             v-if="content.behavior === 'fit' && index > 0"
@@ -48,8 +48,8 @@
                             @startDrag="startDrag($event, index, 'start')"
                             @drag="drag($event)"
                             @endDrag="endDrag($event)"
-                            @mouseenter.native="isHover = true"
-                            @mouseleave.native="isHover = false"
+                            @mouseenter="isHover = true"
+                            @mouseleave="isHover = false"
                         />
                         <wwDraggable
                             v-if="content.behavior !== 'fit' || index < content.wwObjects.length - 1"
@@ -59,20 +59,20 @@
                             @startDrag="startDrag($event, index, 'end')"
                             @drag="drag($event)"
                             @endDrag="endDrag($event)"
-                            @mouseenter.native="isHover = true"
-                            @mouseleave.native="isHover = false"
+                            @mouseenter="isHover = true"
+                            @mouseleave="isHover = false"
                         />
                         <div v-if="showLength" class="ww-container__units">
                             {{ `${getGridAt(index)}${content.lengthInUnit === 100 ? '%' : ''}` }}
                         </div>
-                        <div class="ww-container__border" :class="{ '-binded': isBinded }"></div>
+                        <div class="ww-container__border" :class="{ '-bound': isBound }"></div>
                     </template>
-                    <!-- wwManager:end -->
+                    <!-- wwEditor:end -->
                 </wwLayoutItem>
             </template>
         </wwLayout>
         <Paginator v-if="content.pagination === 'bottom'" class="paginator"></Paginator>
-        <!-- wwManager:start -->
+        <!-- wwEditor:start -->
         <div
             class="ww-container__menu"
             :style="{ '--ww-container-menu-offset': menuSize }"
@@ -81,8 +81,8 @@
         >
             <wwEditorIcon small name="config"></wwEditorIcon>
         </div>
-        <div class="ww-container__border" :class="{ '-binded': isBinded }"></div>
-        <!-- wwManager:end -->
+        <div class="ww-container__border" :class="{ '-bound': isBound }"></div>
+        <!-- wwEditor:end -->
     </div>
 </template>
 
@@ -108,16 +108,10 @@ export default {
         maxItem: wwLib.responsive(50),
         pagination: wwLib.responsive(null),
     },
-    wwEditorConfiguration({ content, bindedProps }) {
+    wwEditorConfiguration({ content, boundProps }) {
         return content.direction === 'row'
-            ? getRowConfiguration(content, bindedProps)
-            : getColumnConfiguration(content, bindedProps);
-    },
-    props: {
-        content: Object,
-        /* wwEditor:start */
-        wwEditorState: Object,
-        /* wwEditor:end */
+            ? getRowConfiguration(content, boundProps)
+            : getColumnConfiguration(content, boundProps);
     },
     inject: {
         parentLevel: { from: 'level', default: 0 },
@@ -128,6 +122,13 @@ export default {
             level: this.level,
         };
     },
+    props: {
+        content: { type: Object, required: true },
+        /* wwEditor:start */
+        wwEditorState: { type: Object, required: true },
+        /* wwEditor:end */
+    },
+    emits: ['update:content', 'update:content:effect'],
     data() {
         return {
             dragingHandle: 'start',
@@ -154,18 +155,21 @@ export default {
             /* wwEditor:start */
             return this.wwEditorState.editMode === wwLib.wwEditorHelper.EDIT_MODES.EDITION;
             /* wwEditor:end */
+            // eslint-disable-next-line no-unreachable
             return false;
         },
         isEmpty() {
             /* wwEditor:start */
             return !this.content || !this.content.wwObjects || !this.content.wwObjects.length;
             /* wwEditor:end */
+            // eslint-disable-next-line no-unreachable
             return false;
         },
-        isBinded() {
+        isBound() {
             /* wwEditor:start */
-            return this.wwEditorState.bindedProps && this.wwEditorState.bindedProps.wwObjects;
+            return this.wwEditorState.boundProps && this.wwEditorState.boundProps.wwObjects;
             /* wwEditor:end */
+            // eslint-disable-next-line no-unreachable
             return false;
         },
         level() {
@@ -198,7 +202,7 @@ export default {
             }
         },
         /* wwEditor:start */
-        isBinded: {
+        isBound: {
             handler(newVal, oldVal) {
                 if (!_.isEqual(newVal, oldVal)) {
                     if (newVal) {
@@ -211,7 +215,7 @@ export default {
                             wwObjects = [this.content.wwObjects[0]];
                         }
                         const behavior = this.content.behavior === 'fit' ? 'wrap' : this.content.behavior;
-                        this.$emit('update-effect', { behavior, gridDisplay, grid, wwObjects });
+                        this.$emit('update:content:effect', { behavior, gridDisplay, grid, wwObjects });
                     }
                 }
             },
@@ -249,7 +253,7 @@ export default {
                     };
                     grid = this.content.grid.map(item => Math.min(getNewGridItem(item), this.content.lengthInUnit));
                 }
-                if (!_.isEqual(grid, this.content.grid)) this.$emit('update-effect', { grid });
+                if (!_.isEqual(grid, this.content.grid)) this.$emit('update:content:effect', { grid });
             }
         },
         'content.grid'() {
@@ -290,7 +294,7 @@ export default {
                 return;
             }
             if (isPaginated && !wasPaginated && !this.content.maxItem) {
-                this.$emit('update-effect', { maxItem: 20 });
+                this.$emit('update:content:effect', { maxItem: 20 });
             }
         },
         'content.maxItem'(newVal, oldVal) {
@@ -298,9 +302,14 @@ export default {
                 return;
             }
             if (!newVal && oldVal && this.content.pagination) {
-                this.$emit('update-effect', { pagination: null });
+                this.$emit('update:content:effect', { pagination: null });
             }
         },
+        /* wwEditor:end */
+    },
+    mounted() {
+        /* wwEditor:start */
+        this.correctData();
         /* wwEditor:end */
     },
     methods: {
@@ -401,7 +410,7 @@ export default {
             return style;
         },
         getGridAt(index, grid) {
-            index = this.isBinded ? 0 : index;
+            index = this.isBound ? 0 : index;
             grid = grid || this.content.grid;
             if (!grid) return 0;
 
@@ -439,10 +448,10 @@ export default {
             gridDisplay = gridDisplay.slice(0, event.list.length);
 
             if (this.content.direction === 'column') {
-                this.$emit('update-effect', { gridDisplay });
+                this.$emit('update:content:effect', { gridDisplay });
             } else {
                 const grid = this.getNewGrid(event, gridDisplay);
-                this.$emit('update-effect', { grid, gridDisplay });
+                this.$emit('update:content:effect', { grid, gridDisplay });
             }
             /* wwEditor:end */
         },
@@ -516,7 +525,7 @@ export default {
             }
             let newGridValue = Math.max(
                 1,
-                this.getGridAt(this.isBinded ? 0 : this.dragingIndex, this.initialGrid) +
+                this.getGridAt(this.isBound ? 0 : this.dragingIndex, this.initialGrid) +
                     Math.round(totalDeltaX / this.unitLengthInPx)
             );
             if (this.content.behavior === 'fit') {
@@ -533,14 +542,14 @@ export default {
                     newGridValue = Math.min(newGridValue, this.content.lengthInUnit);
                 }
                 this.setGridValue({
-                    [this.isBinded ? 0 : this.dragingIndex]: newGridValue,
+                    [this.isBound ? 0 : this.dragingIndex]: newGridValue,
                 });
             }
         },
         setGridValue(update) {
             const grid = this.content.grid.map((val, i) => update[i] || val);
             if (!_.isEqual(grid, this.content.grid)) {
-                this.$emit('update', { grid });
+                this.$emit('update:content', { grid });
             }
         },
         // Legacy
@@ -573,14 +582,9 @@ export default {
                 );
             }
             if (update) {
-                this.$emit('update-effect', update);
+                this.$emit('update:content:effect', update);
             }
         },
-        /* wwEditor:end */
-    },
-    mounted() {
-        /* wwEditor:start */
-        this.correctData();
         /* wwEditor:end */
     },
 };
@@ -606,7 +610,7 @@ export default {
             height: 5px;
             background-color: #ffffff00;
         }
-        /deep/ > .ww-layout__placeholder {
+        :deep(*) > .ww-layout__placeholder {
             flex: 1;
         }
     }
@@ -627,7 +631,7 @@ export default {
             }
             & > .ww-container__border {
                 border: 1px dashed var(--ww-container-color);
-                &.-binded {
+                &.-bound {
                     border-color: var(--ww-color-purple-500);
                 }
                 display: block;
@@ -717,7 +721,7 @@ export default {
         &:hover {
             & > .ww-container__border {
                 border: 1px solid var(--ww-container-color);
-                &.-binded {
+                &.-bound {
                     border-color: var(--ww-color-purple-500);
                 }
                 display: block;
