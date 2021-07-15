@@ -1,5 +1,13 @@
 <template>
-    <div class="ww-container" :class="{ editing: isEditing, empty: isEmpty }">
+    <div
+        class="ww-container"
+        :class="{
+            /* wwEditor:start */
+            editing: isEditing,
+            empty: isEmpty,
+            /* wwEditor:end */
+        }"
+    >
         <Paginator v-if="content.pagination === 'top'" class="paginator"></Paginator>
         <wwLayout
             ref="layout"
@@ -22,9 +30,11 @@
                     class="ww-container__item"
                     :class="[
                         {
+                            /* wwEditor:start */
                             editing: isEditing,
                             draging: dragingIndex === index,
                             'show-length': showLength,
+                            /* wwEditor:end */
                         },
                     ]"
                     :style="getItemStyle(item, index)"
@@ -127,6 +137,7 @@ export default {
         /* wwEditor:start */
         wwEditorState: { type: Object, required: true },
         /* wwEditor:end */
+        wwFrontState: { type: Object, required: true },
     },
     emits: ['update:content', 'update:content:effect'],
     data() {
@@ -149,21 +160,7 @@ export default {
     },
     computed: {
         screenSize() {
-            return this.$store.getters['front/getScreenSize'];
-        },
-        isEditing() {
-            /* wwEditor:start */
-            return this.wwEditorState.editMode === wwLib.wwEditorHelper.EDIT_MODES.EDITION;
-            /* wwEditor:end */
-            // eslint-disable-next-line no-unreachable
-            return false;
-        },
-        isEmpty() {
-            /* wwEditor:start */
-            return !this.content || !this.content.wwObjects || !this.content.wwObjects.length;
-            /* wwEditor:end */
-            // eslint-disable-next-line no-unreachable
-            return false;
+            return this.wwFrontState.screenSize;
         },
         isBound() {
             /* wwEditor:start */
@@ -175,13 +172,19 @@ export default {
         level() {
             return this.parentLevel + 1;
         },
+        /* wwEditor:start */
+        isEditing() {
+            return this.wwEditorState.editMode === wwLib.wwEditorHelper.EDIT_MODES.EDITION;
+        },
+        isEmpty() {
+            return !this.content || !this.content.wwObjects || !this.content.wwObjects.length;
+        },
         isDraging() {
             return this.dragingIndex >= 0;
         },
         showLength() {
             return this.isDraging || this.isHover;
         },
-        /* wwEditor:start */
         menuSize() {
             return 0; //`${6 * (this.level - 1)}px`;
         },
