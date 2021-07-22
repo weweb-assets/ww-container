@@ -116,29 +116,6 @@ const PUSH_LAST = {
     },
 };
 
-const MAX_ITEM = {
-    label: { en: 'Number of items max', fr: 'Nombre maximal' },
-    type: 'Number',
-    options: {
-        nullable: true,
-        min: 1,
-        max: 100,
-    },
-};
-const PAGINATION = {
-    label: {
-        en: 'Use pagination ?',
-    },
-    type: 'TextRadioGroup',
-    options: {
-        choices: [
-            { title: 'bottom', value: 'bottom', label: 'Bottom' },
-            { title: 'top', value: 'top', label: 'Top' },
-            { title: 'None', value: null, label: 'None' },
-        ],
-    },
-};
-
 function getGridAndDisplay(disabled, content, isBound) {
     const gridAndDisplay = {
         lengthInUnitRadio: {
@@ -165,9 +142,6 @@ function getGridAndDisplay(disabled, content, isBound) {
                   },
               }),
     };
-
-    gridAndDisplay.maxItem = MAX_ITEM;
-    gridAndDisplay.pagination = PAGINATION;
 
     if (!isBound) {
         gridAndDisplay['grid-display'] = {
