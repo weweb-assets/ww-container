@@ -45,7 +45,7 @@
                     ></wwObject>
                     <!-- wwEditor:start -->
                     <template v-if="isEditing && content.direction === 'row' && content.type === 'grid'">
-                        <wwDraggable
+                        <wwEditorDraggable
                             v-if="content.behavior === 'fit' && index > 0"
                             class="ww-container__handle start"
                             :class="{ active: isDraging }"
@@ -56,7 +56,7 @@
                             @mouseenter="isHover = true"
                             @mouseleave="isHover = false"
                         />
-                        <wwDraggable
+                        <wwEditorDraggable
                             v-if="content.behavior !== 'fit' || index < content.wwObjects.length - 1"
                             class="ww-container__handle end"
                             :class="{ active: isDraging }"
