@@ -194,39 +194,26 @@ export default {
                 iframe.classList.remove('ww-stop-event');
             }
         },
-        content(newContent, oldContent) {
+        'content.lengthInUnit'(newVal, oldVal){
             if (this.wwEditorState.isACopy) {
                 return;
             }
-            this.oldLengthInUnit = oldContent.lengthInUnit || this.oldLengthInUnit || newContent.lengthInUnit;
-            if (
-                (newContent.lengthInUnit && newContent.lengthInUnit !== oldContent.lengthInUnit) ||
-                newContent.behavior !== oldContent.behavior ||
-                newContent.type !== oldContent.type ||
-                (!_.isEqual(newContent.grid, oldContent.grid) && !this.isDraging) ||
-                !_.isEqual(newContent.gridDisplay, oldContent.gridDisplay)
-            ) {
-                let grid = this.normalizeGrid(newContent.grid); // legacy
-                if (this.content.behavior === 'fit') {
-                    grid = this.fit(this.content.wwObjects, this.content.grid, this.content.gridDisplay);
-                } else {
-                    const getNewGridItem = item => {
-                        return Math.round(
-                            (newContent.lengthInUnit * item) / (this.oldLengthInUnit || newContent.lengthInUnit)
-                        );
-                    };
-                    grid = this.content.grid.map(item => Math.min(getNewGridItem(item), this.content.lengthInUnit));
-                }
-                if (!_.isEqual(grid, this.content.grid)) this.$emit('update:content:effect', { grid });
-            }
+            if(newVal && newVal !== oldVal) this.calc();
         },
-        'content.grid'() {
+        'content.grid'(newVal, oldVal) {
             if (this.wwEditorState.isACopy) {
                 return;
             }
             if (!this.isDraging) {
+                if(!_.isEqual(newVal, oldVal)) this.calc();
                 this.correctData();
             }
+        },
+        'content.gridDisplay'(newVal, oldVal) {
+            if (this.wwEditorState.isACopy) {
+                return;
+            }
+            if(!_.isEqual(newVal, oldVal)) this.calc();
         },
         'content.alignItems'(newVal, oldVal) {
             if (newVal !== oldVal) {
@@ -242,11 +229,13 @@ export default {
         'content.columnGap'(...options) {
             this.updateLayoutStyle(options);
         },
-        'content.behavior'(...options) {
-            this.updateLayoutStyle(options);
+        'content.behavior'(newVal, oldVal) {
+            if(newVal !== oldVal) this.calc();
+            this.updateLayoutStyle(newVal, oldVal);
         },
         'content.type'(newVal, oldVal) {
             if (newVal !== oldVal) {
+                this.calc();
                 this.inheritFromElement = this.getInheritFromElement();
             }
         },
@@ -258,6 +247,20 @@ export default {
         /* wwEditor:end */
     },
     methods: {
+        calc(){
+            let grid = this.normalizeGrid(this.content.grid); // legacy
+                if (this.content.behavior === 'fit') {
+                    grid = this.fit(this.content.wwObjects, this.content.grid, this.content.gridDisplay);
+                } else {
+                    const getNewGridItem = item => {
+                        return Math.round(
+                            (this.content.lengthInUnit * item) / (this.content.lengthInUnit)
+                        );
+                    };
+                    grid = this.content.grid.map(item => Math.min(getNewGridItem(item), this.content.lengthInUnit));
+                }
+                if (!_.isEqual(grid, this.content.grid)) this.$emit('update:content:effect', { grid });
+        },
         getWwObjectFlex() {
             return this.content.alignItems === 'stretch' ? '1' : 'unset';
         },
