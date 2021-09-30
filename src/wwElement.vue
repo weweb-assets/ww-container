@@ -91,28 +91,7 @@
 </template>
 
 <script>
-import { getRowConfiguration, getColumnConfiguration } from './configuration';
-
 export default {
-    wwDefaultContent: {
-        wwObjects: [],
-        grid: wwLib.responsive([]),
-        gridDisplay: wwLib.responsive([]),
-        direction: wwLib.responsive('row'),
-        reverse: wwLib.responsive(false),
-        lengthInUnit: wwLib.responsive(100),
-        columnGap: wwLib.responsive('0px'),
-        type: wwLib.responsive('grid'),
-        behavior: wwLib.responsive('fit'),
-        justifyContent: wwLib.responsive('center'),
-        alignItems: wwLib.responsive('start'),
-        pushLast: wwLib.responsive(false),
-    },
-    wwEditorConfiguration({ content, boundProps }) {
-        return content.direction === 'row'
-            ? getRowConfiguration(content, boundProps)
-            : getColumnConfiguration(content, boundProps);
-    },
     inject: {
         parentLevel: { from: 'level', default: 0 },
         objectId: { from: 'objectId' },
