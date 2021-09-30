@@ -1,12 +1,12 @@
 export default {
     "editor": {
-        "label": { "en": "Container", "fr": "Container" },
+        "label": { "en": "Container - Legacy", "fr": "Container - Legacy" },
         "menuOptions": {
             "quick": {
                 "sections": ["ww-sizing", "ww-background"]
             }
         },
-        icon: 'border',
+        icon: 'fontawesome/solid/exclamation-triangle',
     },
     properties: {
         wwObjects: {
@@ -146,6 +146,7 @@ export default {
             options: content => ({
                 disabled: content.type === 'flex' || content.direction === 'column',
             }),
+            section: 'settings',
             responsive: true,
             defaultValue: 100
         },

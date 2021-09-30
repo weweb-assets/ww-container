@@ -539,7 +539,7 @@ export default {
 .ww-container {
     position: relative;
     box-sizing: border-box;
-    --ww-container-color: var(--ww-color-blue-400);
+    --ww-container-color: var(--ww-color-yellow-400);
 
     &__layout {
         display: flex;
