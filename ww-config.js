@@ -84,7 +84,7 @@ export default {
             defaultValue: 'fit'
         },
         alignItems: {
-            label: { en: 'Vertical alignement', fr: 'Alignement vertical' },
+            label: { en: 'Vertical alignment', fr: 'Alignement vertical' },
             type: 'TextRadioGroup',
             hidden: content => content.direction !== 'row',
             options: {
@@ -100,7 +100,7 @@ export default {
             defaultValue: 'start'
         },
         justifyContent: {
-            label: { en: 'Alignement', fr: 'Alignement' },
+            label: { en: 'Alignment', fr: 'Alignement' },
             type: 'TextRadioGroup',
             options: (content) =>  {
                 return  {
