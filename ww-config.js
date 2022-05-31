@@ -1,11 +1,6 @@
 export default {
     "editor": {
         "label": { "en": "Container - Legacy", "fr": "Container - Legacy" },
-        "menuOptions": {
-            "quick": {
-                "sections": ["ww-sizing", "ww-background"]
-            }
-        },
         icon: 'fontawesome/solid/exclamation-triangle',
     },
     properties: {
