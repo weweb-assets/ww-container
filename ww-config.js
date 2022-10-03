@@ -1,28 +1,29 @@
 export default {
-    "editor": {
-        "label": { "en": "Container - Legacy", "fr": "Container - Legacy" },
+    editor: {
+        label: { en: 'Container', fr: 'Container' },
         icon: 'fontawesome/solid/exclamation-triangle',
+        deprecated: true,
     },
     properties: {
         wwObjects: {
-            bindable: "repeatable",
+            bindable: 'repeatable',
             type: 'Info',
-            "label": {
-                "en": "Data to repeat",
-                "fr": "Données à répéter"
+            label: {
+                en: 'Data to repeat',
+                fr: 'Données à répéter',
             },
             options: {
-                text: 'Select'
+                text: 'Select',
             },
-            defaultValue: []
+            defaultValue: [],
         },
         grid: {
             hidden: true,
-            defaultValue: []
+            defaultValue: [],
         },
         gridDisplay: {
             hidden: true,
-            defaultValue: []
+            defaultValue: [],
         },
         direction: {
             label: { en: 'Direction', fr: 'Direction' },
@@ -34,7 +35,7 @@ export default {
                 ],
             },
             responsive: true,
-            defaultValue: 'row'
+            defaultValue: 'row',
         },
         reverse: {
             label: { en: 'Reverse order', fr: "Inverser l'ordre" },
@@ -46,7 +47,7 @@ export default {
                 ],
             },
             responsive: true,
-            defaultValue: false
+            defaultValue: false,
         },
         type: {
             label: { en: 'Arrangement', fr: 'Arrangement' },
@@ -59,7 +60,7 @@ export default {
                 ],
             },
             responsive: true,
-            defaultValue: 'grid'
+            defaultValue: 'grid',
         },
         behavior: {
             hidden: content => content.direction !== 'row' || content.type !== 'grid',
@@ -73,10 +74,10 @@ export default {
                         { value: 'wrap', label: { en: 'Wrap onto multiple lines', fr: 'A la ligne' } },
                         { value: 'scroll', label: { en: 'Scroll onto one line', fr: 'Scroll sur une ligne' } },
                     ],
-                }
+                };
             },
             responsive: true,
-            defaultValue: 'fit'
+            defaultValue: 'fit',
         },
         alignItems: {
             label: { en: 'Vertical alignment', fr: 'Alignement vertical' },
@@ -92,35 +93,49 @@ export default {
                 ],
             },
             responsive: true,
-            defaultValue: 'start'
+            defaultValue: 'start',
         },
         justifyContent: {
             label: { en: 'Alignment', fr: 'Alignement' },
             type: 'TextRadioGroup',
-            options: (content) =>  {
-                return  {
-                    choices: content.direction === 'row' ? [
-                        { value: 'flex-start', title: { en: 'Start', fr: 'Début' }, icon: 'align-x-start' },
-                        { value: 'center', title: { en: 'Center', fr: 'Milieu' }, icon: 'align-x-center' },
-                        { value: 'flex-end', title: { en: 'End', fr: 'Fin' }, icon: 'align-x-end' },
-                        { value: 'space-around', title: { en: 'Space around', fr: 'Space around' }, icon: 'align-x-space-around' },
-                        {
-                            value: 'space-between',
-                            title: { en: 'Space between', fr: 'Space between' },
-                            icon: 'align-x-space-between',
-                        },
-                    ] : 
-                    [
-                        { value: 'flex-start', title: { en: 'Start', fr: 'Début' }, icon: 'align-y-start' },
-                        { value: 'center', title: { en: 'Center', fr: 'Milieu' }, icon: 'align-y-center' },
-                        { value: 'flex-end', title: { en: 'End', fr: 'Fin' }, icon: 'align-y-end' },
-                        { value: 'stretch', title: { en: 'Stretch', fr: 'Stretch' }, icon: 'align-y-stretch' },
-                        { value: 'baseline', title: { en: 'Baseline', fr: 'Baseline' }, icon: 'align-y-baseline' },
-                    ],
-                }
+            options: content => {
+                return {
+                    choices:
+                        content.direction === 'row'
+                            ? [
+                                  { value: 'flex-start', title: { en: 'Start', fr: 'Début' }, icon: 'align-x-start' },
+                                  { value: 'center', title: { en: 'Center', fr: 'Milieu' }, icon: 'align-x-center' },
+                                  { value: 'flex-end', title: { en: 'End', fr: 'Fin' }, icon: 'align-x-end' },
+                                  {
+                                      value: 'space-around',
+                                      title: { en: 'Space around', fr: 'Space around' },
+                                      icon: 'align-x-space-around',
+                                  },
+                                  {
+                                      value: 'space-between',
+                                      title: { en: 'Space between', fr: 'Space between' },
+                                      icon: 'align-x-space-between',
+                                  },
+                              ]
+                            : [
+                                  { value: 'flex-start', title: { en: 'Start', fr: 'Début' }, icon: 'align-y-start' },
+                                  { value: 'center', title: { en: 'Center', fr: 'Milieu' }, icon: 'align-y-center' },
+                                  { value: 'flex-end', title: { en: 'End', fr: 'Fin' }, icon: 'align-y-end' },
+                                  {
+                                      value: 'stretch',
+                                      title: { en: 'Stretch', fr: 'Stretch' },
+                                      icon: 'align-y-stretch',
+                                  },
+                                  {
+                                      value: 'baseline',
+                                      title: { en: 'Baseline', fr: 'Baseline' },
+                                      icon: 'align-y-baseline',
+                                  },
+                              ],
+                };
             },
             responsive: true,
-            defaultValue: 'center'
+            defaultValue: 'center',
         },
         pushLast: {
             hidden: content => content.direction === 'row' && content.type !== 'flex',
@@ -133,7 +148,7 @@ export default {
                 ],
             },
             responsive: true,
-            defaultValue: false
+            defaultValue: false,
         },
         lengthInUnit: {
             label: { en: 'Number of units', fr: "Nb d'unité" },
@@ -143,7 +158,7 @@ export default {
             }),
             section: 'settings',
             responsive: true,
-            defaultValue: 100
+            defaultValue: 100,
         },
-    }
-}
+    },
+};
