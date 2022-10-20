@@ -1,7 +1,7 @@
 export default {
     "editor": {
         "label": { "en": "Container - Legacy", "fr": "Container - Legacy" },
-        icon: 'fontawesome/solid/exclamation-triangle',
+        icon: 'exclamation',
     },
     properties: {
         wwObjects: {
