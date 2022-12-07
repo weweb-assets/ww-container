@@ -2,7 +2,7 @@ export default {
     "editor": {
         label: { en: 'Container', fr: 'Container' },
         icon: 'exclamation',
-        deprecated: true,
+        deprecated: 'Use a Div or a Container from the Elements panel instead of this component.',
     },
     properties: {
         wwObjects: {
