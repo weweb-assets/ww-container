@@ -83,7 +83,7 @@
             @mouseenter="isHover = true"
             @mouseleave="isHover = false"
         >
-            <wwEditorIcon small name="config"></wwEditorIcon>
+            <wwEditorIcon small name="adjustments"></wwEditorIcon>
         </div>
         <div class="ww-container__border" :class="{ '-bound': isBound }"></div>
         <!-- wwEditor:end -->

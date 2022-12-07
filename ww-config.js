@@ -1,7 +1,7 @@
 export default {
-    editor: {
+    "editor": {
         label: { en: 'Container', fr: 'Container' },
-        icon: 'fontawesome/solid/exclamation-triangle',
+        icon: 'exclamation',
         deprecated: true,
     },
     properties: {
