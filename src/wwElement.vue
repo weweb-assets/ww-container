@@ -20,7 +20,7 @@
             @update:list="update"
         >
             <template #default="{ layoutId, item, index }" class="ww-container__item">
-                <wwLayoutItem
+                <div
                     ref="layoutItem"
                     class="ww-container__item"
                     :class="[
@@ -73,7 +73,7 @@
                         <div class="ww-container__border" :class="{ '-bound': isBound }"></div>
                     </template>
                     <!-- wwEditor:end -->
-                </wwLayoutItem>
+                </div>
             </template>
         </wwLayout>
         <!-- wwEditor:start -->
