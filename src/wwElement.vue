@@ -533,6 +533,7 @@ export default {
     &__layout {
         display: flex;
         height: 100%;
+        align-items: unset !important;
         &::-webkit-scrollbar-thumb {
             background-color: #808080;
         }
