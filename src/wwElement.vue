@@ -20,8 +20,7 @@
             @update:list="update"
         >
             <template #default="{ layoutId, item, index }" class="ww-container__item">
-                <wwLayoutItem
-                    ref="layoutItem"
+                <div
                     class="ww-container__item"
                     :class="[
                         {
@@ -73,18 +72,10 @@
                         <div class="ww-container__border" :class="{ '-bound': isBound }"></div>
                     </template>
                     <!-- wwEditor:end -->
-                </wwLayoutItem>
+                </div>
             </template>
         </wwLayout>
         <!-- wwEditor:start -->
-        <div
-            class="ww-container__menu"
-            :style="{ '--ww-container-menu-offset': menuSize }"
-            @mouseenter="isHover = true"
-            @mouseleave="isHover = false"
-        >
-            <wwEditorIcon small name="adjustments"></wwEditorIcon>
-        </div>
         <div class="ww-container__border" :class="{ '-bound': isBound }"></div>
         <!-- wwEditor:end -->
     </div>
@@ -151,9 +142,6 @@ export default {
         showLength() {
             return this.isDraging || this.isHover;
         },
-        menuSize() {
-            return 0; //`${6 * (this.level - 1)}px`;
-        },
         /* wwEditor:end */
     },
     watch: {
@@ -194,18 +182,18 @@ export default {
                 iframe.classList.remove('ww-stop-event');
             }
         },
-        'content.lengthInUnit'(newVal, oldVal){
+        'content.lengthInUnit'(newVal, oldVal) {
             if (this.wwEditorState.isACopy) {
                 return;
             }
-            if(newVal && newVal !== oldVal) this.calc();
+            if (newVal && newVal !== oldVal) this.calc();
         },
         'content.grid'(newVal, oldVal) {
             if (this.wwEditorState.isACopy) {
                 return;
             }
             if (!this.isDraging) {
-                if(!_.isEqual(newVal, oldVal)) this.calc();
+                if (!_.isEqual(newVal, oldVal)) this.calc();
                 this.correctData();
             }
         },
@@ -213,7 +201,7 @@ export default {
             if (this.wwEditorState.isACopy) {
                 return;
             }
-            if(!_.isEqual(newVal, oldVal)) this.calc();
+            if (!_.isEqual(newVal, oldVal)) this.calc();
         },
         'content.alignItems'(newVal, oldVal) {
             if (newVal !== oldVal) {
@@ -230,7 +218,7 @@ export default {
             this.updateLayoutStyle(options);
         },
         'content.behavior'(newVal, oldVal) {
-            if(newVal !== oldVal) this.calc();
+            if (newVal !== oldVal) this.calc();
             this.updateLayoutStyle(newVal, oldVal);
         },
         'content.type'(newVal, oldVal) {
@@ -247,19 +235,17 @@ export default {
         /* wwEditor:end */
     },
     methods: {
-        calc(){
+        calc() {
             let grid = this.normalizeGrid(this.content.grid); // legacy
-                if (this.content.behavior === 'fit') {
-                    grid = this.fit(this.content.wwObjects, this.content.grid, this.content.gridDisplay);
-                } else {
-                    const getNewGridItem = item => {
-                        return Math.round(
-                            (this.content.lengthInUnit * item) / (this.content.lengthInUnit)
-                        );
-                    };
-                    grid = this.content.grid.map(item => Math.min(getNewGridItem(item), this.content.lengthInUnit));
-                }
-                if (!_.isEqual(grid, this.content.grid)) this.$emit('update:content:effect', { grid });
+            if (this.content.behavior === 'fit') {
+                grid = this.fit(this.content.wwObjects, this.content.grid, this.content.gridDisplay);
+            } else {
+                const getNewGridItem = item => {
+                    return Math.round((this.content.lengthInUnit * item) / this.content.lengthInUnit);
+                };
+                grid = this.content.grid.map(item => Math.min(getNewGridItem(item), this.content.lengthInUnit));
+            }
+            if (!_.isEqual(grid, this.content.grid)) this.$emit('update:content:effect', { grid });
         },
         getWwObjectFlex() {
             return this.content.alignItems === 'stretch' ? '1' : 'unset';
@@ -547,6 +533,7 @@ export default {
     &__layout {
         display: flex;
         height: 100%;
+        align-items: unset !important;
         &::-webkit-scrollbar-thumb {
             background-color: #808080;
         }
@@ -598,31 +585,6 @@ export default {
         pointer-events: none;
         z-index: 10;
     }
-    &__menu {
-        opacity: 0;
-        pointer-events: none;
-        display: flex;
-        position: absolute;
-        border-radius: 100%;
-        padding: var(--ww-spacing-01);
-        transition: opacity 0.2s ease;
-        z-index: 11;
-        cursor: pointer;
-        background-color: var(--ww-container-color);
-        color: white;
-        justify-content: center;
-        align-items: center;
-        left: 0;
-        top: var(--ww-container-menu-offset);
-        transform: translate(-50%, -50%);
-        transition: transform 0.3s ease;
-        // width: var(--ww-container-menu-size);
-        // height: var(--ww-container-menu-size);
-
-        &:hover {
-            transform: translate(-50%, -50%) scale(1.3);
-        }
-    }
     &__handle {
         position: absolute;
         background: white;
@@ -669,10 +631,6 @@ export default {
                     border-color: var(--ww-color-purple-500);
                 }
                 display: block;
-            }
-            > .ww-container__menu {
-                opacity: 1;
-                pointer-events: all;
             }
         }
 

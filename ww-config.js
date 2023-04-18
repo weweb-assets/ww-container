@@ -1,5 +1,5 @@
 export default {
-    "editor": {
+    editor: {
         label: { en: 'Container', fr: 'Container' },
         icon: 'exclamation',
         deprecated: 'Use a Div or a Container from the Elements panel instead of this one.',
