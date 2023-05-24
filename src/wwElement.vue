@@ -375,7 +375,11 @@ export default {
                     gridDisplay.splice(event.fromIndex, 1);
                     break;
                 case 'move':
-                    gridDisplay = this.moveItem(gridDisplay, event.fromIndex, event.index);
+                    for (const child of event.movingChildren) {
+                        if (child.layoutIndex !== event.index) {
+                            gridDisplay.splice(child.layoutIndex, 1);
+                        }
+                    }
                     break;
             }
 
