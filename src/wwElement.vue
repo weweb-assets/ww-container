@@ -381,6 +381,8 @@ export default {
                         }
                     }
                     break;
+                default:
+                    return;
             }
 
             gridDisplay = gridDisplay.slice(0, event.list.length);
